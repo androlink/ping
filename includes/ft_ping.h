@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/13 19:42:26 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/14 17:22:27 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,12 +23,12 @@ typedef struct s_option	t_option;
 
 typedef int				t_socket;
 
-// default timeout in ms
-# define DEFAULT_TIMEOUT 5000.
+// default timeout in second
+# define DEFAULT_TIMEOUT 1.
 // max ping loop count
 # define MAX_COUNT ((~0UL) >> 1)
 
-#define PING_INTERVAL 1000.
+#define PING_INTERVAL 1.
 
 #define PKT_SIZE 64
 
@@ -36,7 +36,9 @@ struct s_option
 {
 	int		flood:1;
 	int		ttl;
-	double	timout;
+	// packet timeout in second
+	double	timeout;
+	// send interval in second
 	double	interval;
 	long	count;
 };
@@ -82,6 +84,8 @@ enum e_ierror_code
 const char	*str_ierror(int code);
 int			need_errno(int code);
 void		print_error(int code);
+
+double getftime();
 
 int			init_ping(char *str_dest, t_ping *ping);
 void		free_ping(t_ping *ping);
