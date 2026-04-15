@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 14:46:57 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/15 18:48:27 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/15 19:29:55 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,8 @@ static const struct option long_option[] = {
 int	init_option(int ac, char **av, t_ping *ping)
 {
 	ping->flood = 0,
-	ping->interval = .002,
-	ping->timeout = .001,
+	ping->interval = .02,
+	ping->timeout = .01,
 	ping->ttl = 64,
 	ping->count = 100,
 	ping->dest_addr = (typeof(ping->dest_addr)){

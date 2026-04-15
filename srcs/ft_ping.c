@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 16:33:18 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/15 18:46:17 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/15 19:48:02 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@ int	ft_ping(t_ping *ping)
 		unsigned char time_to_live = 64;
 		setsockopt(ping->sckt_fd, SOL_IP, IP_TTL, &time_to_live, sizeof(time_to_live));
 	}
+	
 	pfd = (typeof(pfd)){.fd = ping->sckt_fd};
 	while (loopcount <= ping->count)
 	{
@@ -108,13 +109,13 @@ static int	ping_routine(t_ping *ping, int seq, int *poll_state, double	*time_sta
 		time_stop = getftime();
 		if (ping_recv(ping, &recv_pkt) == -1)
 			return (-1);
-		if (recv_pkt.icmp.hdr.un.echo.sequence != seq)
+		if (recv_pkt.icmp.hdr.un.echo.sequence != seq ||
+			recv_pkt.icmp.hdr.type == ICMP_ECHO)
 		{
 			return (0);
 		}
 		write(1, "\b", 2);
 		*poll_state = POLLOUT;
-		ping->rx++;
 		process_reply(ping, &recv_pkt, time_stop - *time_start);
 	}
 	return (1);
@@ -133,6 +134,7 @@ static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double tim
 	}
 	else if (icmp_hdr->type == ICMP_ECHOREPLY)
 	{
+		ping->rx++;
 		char dest_ip[50];
 		printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
 			PKT_SIZE, inet_ntop(AF_INET, &ping->dest_addr.sin_addr, dest_ip, sizeof(dest_ip)), (int)icmp_hdr->un.echo.sequence,
@@ -140,7 +142,7 @@ static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double tim
 	}
 	else
 	{
-		
+		printf("other ICMP response found: %d\n", icmp_hdr->type);
 	}
 
 	return 1;
