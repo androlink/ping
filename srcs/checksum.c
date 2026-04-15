@@ -6,13 +6,11 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 17:05:46 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/12 19:02:43 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/15 16:16:37 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-unsigned short	icmp_checksum(
-	void *pckt,
-	int pckt_byte_count)
+unsigned short	icmp_checksum(void *pckt, int pckt_byte_count)
 {
 	unsigned short	*buff = pckt;
 	unsigned int	sum = 0;

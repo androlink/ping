@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 16:33:18 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/14 20:31:20 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/15 18:46:17 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,10 @@
 #include <stdio.h>
 #include <sys/poll.h>
 
+static int	ping_routine(t_ping *ping, int seq, int *poll_state, double	*time_start);
 static int	ping_send(t_ping *ping, struct s_icmp_packet *pckt);
 static int	ping_recv(t_ping *ping, struct s_icmp_recv *pckt);
 static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double time);
-static int ping_routine(t_ping *ping, int seq, int *poll_state, double	*time_start);
 
 double getftime()
 {
@@ -31,7 +31,7 @@ double getftime()
 	return (tv.tv_sec * 1000. + tv.tv_usec / 1000.);
 }
 
-int	ft_ping(t_ping *ping, t_option *option)
+int	ft_ping(t_ping *ping)
 {
 	int				poll_state = POLLOUT;
 	int				loopcount = 1;
@@ -46,10 +46,10 @@ int	ft_ping(t_ping *ping, t_option *option)
 		setsockopt(ping->sckt_fd, SOL_IP, IP_TTL, &time_to_live, sizeof(time_to_live));
 	}
 	pfd = (typeof(pfd)){.fd = ping->sckt_fd};
-	while (loopcount <= option->count)
+	while (loopcount <= ping->count)
 	{
 		pfd.events = poll_state;
-		int timeout = (option->timeout * 1000.) + 100;
+		int timeout = (ping->timeout * 1000.) + 100;
 		timeout = timeout - time_diff;
 		if ((ret = poll(&pfd, 1, timeout)) == -1)
 		{
@@ -79,14 +79,14 @@ int	ft_ping(t_ping *ping, t_option *option)
 				continue;
 			}
 		}
-		usleep(option->interval * 1000000);
+		usleep(ping->interval * 1000000);
 		time_diff = 0;
 		loopcount++;
 	}
 	return 1;
 }
 
-static int ping_routine(t_ping *ping, int seq, int *poll_state, double	*time_start)
+static int	ping_routine(t_ping *ping, int seq, int *poll_state, double	*time_start)
 {
 	struct s_icmp_packet	pckt;
 	struct s_icmp_recv		recv_pkt;
@@ -98,6 +98,7 @@ static int ping_routine(t_ping *ping, int seq, int *poll_state, double	*time_sta
 		ping->tx++;
 		if (ping_send(ping, &pckt) == -1)
 			return (-1);
+		if (ping->audible) write(2, "\a", 1);
 		write(1, ".", 1);
 		*poll_state = POLLIN;
 		return (2);

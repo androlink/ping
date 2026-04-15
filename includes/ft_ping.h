@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/14 17:22:27 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/15 18:44:20 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,15 +32,17 @@ typedef int				t_socket;
 
 #define PKT_SIZE 64
 
-struct s_option
+enum e_option_type
 {
-	int		flood:1;
-	int		ttl;
-	// packet timeout in second
-	double	timeout;
-	// send interval in second
-	double	interval;
-	long	count;
+	OT_COUNT,
+	OT_FLOOD,
+	OT_AUDIBLE,
+	OT_INTERVAL,
+	OT_TIMEOUT,
+	OT_TTL,
+	OT_ADDR,
+	OT_TIMESTAMP,
+	OT_VERBOSE,
 };
 
 struct	s_ping
@@ -48,9 +50,22 @@ struct	s_ping
 	int					sckt_fd;
 	int					tx;
 	int					rx;
-	unsigned int		target_addr;
+	// print a '\a' when send
+	int					audible;
+	// print a '.' when send
+	int					flood;
+	int					verbose;
+	int					timestamp;
+	// packet time to live in second
+	int					ttl;
+	// packet timeout in second
+	double				timeout;
+	// send interval in second
+	double				interval;
+
+	long	count;
+
 	struct sockaddr_in	dest_addr;
-	t_option			option;
 };
 
 struct s_icmp_packet
@@ -65,11 +80,12 @@ struct s_icmp_recv
 	struct s_icmp_packet	icmp;
 };
 
-unsigned short	icmp_checksum(
-	unsigned short *addr,
-	unsigned int addr_byte_count);
+unsigned short	icmp_checksum(void *addr, int pckt_byte_count);
 struct s_icmp_packet init_icmp_packet(int seq);
 
+
+int	init_option(int ac, char **av, t_ping *ping);
+int	set_option(t_ping *ping, enum e_option_type type, void *param);
 
 enum e_ierror_code
 {
@@ -87,9 +103,9 @@ void		print_error(int code);
 
 double getftime();
 
-int			init_ping(char *str_dest, t_ping *ping);
+int			init_ping(t_ping *ping);
 void		free_ping(t_ping *ping);
 
-int			ft_ping(t_ping *ping, t_option *option);
+int			ft_ping(t_ping *ping);
 
 #endif
