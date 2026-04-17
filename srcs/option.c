@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 14:46:57 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/15 19:29:55 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/17 19:36:09 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #include <getopt.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 
 static void	print_option(void);
 
@@ -22,31 +24,20 @@ static const struct option long_option[] = {
 	{"count", required_argument, 0, 'c'},
 	{"flood", no_argument, 0, 'f'},
 	{"interval", required_argument, 0, 'i'},
+	{"size", required_argument, 0, 's'},
 	{"ttl", required_argument, 0, 't'},
 	{"timestamp", no_argument, 0, 'T'},
-	{"verbose", no_argument, 0, 'v'},
 	{"timeout", required_argument, 0, 'W'},
+	{"verbose", no_argument, 0, 'v'},
 	{"help", required_argument, 0, 'h'},
 	{0},
-	
 };
 
 int	init_option(int ac, char **av, t_ping *ping)
 {
-	ping->flood = 0,
-	ping->interval = .02,
-	ping->timeout = .01,
-	ping->ttl = 64,
-	ping->count = 100,
-	ping->dest_addr = (typeof(ping->dest_addr)){
-		.sin_addr.s_addr = 0,
-		.sin_family = AF_INET
-	};
-	ping->audible = 0;
-	ping->timestamp = 0;
 
 	int ch;
-	while ((ch = getopt_long(ac, av, "ac:fi:t:T:vW:h?", long_option, NULL)) != -1)
+	while ((ch = getopt_long(ac, av, "ac:fi:s:t:T:vW:h?", long_option, NULL)) != -1)
 	{
 		dprintf(2, "option found: %c with value %s\n", ch, optarg);
 		if (ch == '?' || ch == 'h')
@@ -57,20 +48,32 @@ int	init_option(int ac, char **av, t_ping *ping)
 			int i = 1;
 			set_option(ping, OT_AUDIBLE, &i);
 		}else if (ch == 'c'){
+			long c = strtol(optarg, NULL, 10);
+			set_option(ping, OT_COUNT, &c);
 		}else if (ch == 'f'){
-			int i = 1;
-			set_option(ping, OT_FLOOD, &i);
+			int f = 1;
+			set_option(ping, OT_FLOOD, &f);
 		}else if (ch == 'i'){
+			double i = strtod(optarg, NULL);
+			set_option(ping, OT_INTERVAL, &i);
 		}else if (ch == 't'){
+			int t = strtol(optarg, NULL, 10);
+			set_option(ping, OT_TTL, &t);
 		}else if (ch == 'T'){
-			int i = 1;
-			set_option(ping, OT_TIMESTAMP, &i);
+			int t = 1;
+			set_option(ping, OT_TIMESTAMP, &t);
 		}else if (ch == 'v'){
-			int i = 1;
-			set_option(ping, OT_VERBOSE, &i);
+			int v = 1;
+			set_option(ping, OT_VERBOSE, &v);
 		}else if (ch == 'W'){
+			double w = strtod(optarg, NULL);
+			set_option(ping, OT_TIMEOUT, &w);
+		}else if (ch == 's'){
+			int s = strtol(optarg, NULL, 10);
+			set_option(ping, OT_SIZE, &s);
 		}
 	}
+
 	for (int i = 0; i < ac; i++)
 		dprintf(2, "argv[%d] = %s\n", i, av[i]);
 
@@ -83,27 +86,6 @@ int	init_option(int ac, char **av, t_ping *ping)
 	}
 
 	return 1;
-}
-
-int	set_option(t_ping *ping, enum e_option_type type, void *param)
-{
-	#define OPT_CASE(COND, FLD) case COND: FLD = *(typeof(FLD) *) param; break
-
-	switch (type)
-	{
-		OPT_CASE(OT_FLOOD, ping->flood);
-		OPT_CASE(OT_COUNT, ping->count);
-		OPT_CASE(OT_INTERVAL, ping->interval);
-		OPT_CASE(OT_TIMEOUT, ping->timeout);
-		OPT_CASE(OT_TTL, ping->ttl);
-		OPT_CASE(OT_ADDR, ping->dest_addr.sin_addr.s_addr);
-		OPT_CASE(OT_AUDIBLE, ping->audible);
-		OPT_CASE(OT_TIMESTAMP, ping->timestamp);
-		OPT_CASE(OT_VERBOSE, ping->verbose);
-	default:
-		break;
-	}
-	return 0;
 }
 
 static void	print_option(void)

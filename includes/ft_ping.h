@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/15 18:44:20 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/17 18:33:11 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,19 +30,32 @@ typedef int				t_socket;
 
 #define PING_INTERVAL 1.
 
-#define PKT_SIZE 64
+#define PKT_MAX_SIZE 0x10000
 
 enum e_option_type
 {
+	// param type long
 	OT_COUNT,
+	// param type int
 	OT_FLOOD,
+	// param type int
 	OT_AUDIBLE,
+	// param type double
 	OT_INTERVAL,
+	// param type double
 	OT_TIMEOUT,
+	// param type int
 	OT_TTL,
+	// param type in_addr_t
 	OT_ADDR,
+	// param type int
 	OT_TIMESTAMP,
+	// param type int
 	OT_VERBOSE,
+	// param type short
+	OT_SEQUENCE,
+	// param type int
+	OT_SIZE,
 };
 
 struct	s_ping
@@ -50,6 +63,7 @@ struct	s_ping
 	int					sckt_fd;
 	int					tx;
 	int					rx;
+	int					id;
 	// print a '\a' when send
 	int					audible;
 	// print a '.' when send
@@ -63,7 +77,11 @@ struct	s_ping
 	// send interval in second
 	double				interval;
 
-	long	count;
+	long				count;
+
+	short				sequence;
+
+	int					packet_size;
 
 	struct sockaddr_in	dest_addr;
 };
@@ -71,7 +89,7 @@ struct	s_ping
 struct s_icmp_packet
 {
 	struct	icmphdr hdr;
-	char 	buffer[PKT_SIZE - sizeof(struct	icmphdr)];
+	char 	buffer[PKT_MAX_SIZE - sizeof(struct	icmphdr)];
 };
 
 struct s_icmp_recv
@@ -81,7 +99,7 @@ struct s_icmp_recv
 };
 
 unsigned short	icmp_checksum(void *addr, int pckt_byte_count);
-struct s_icmp_packet init_icmp_packet(int seq);
+struct s_icmp_packet init_icmp_packet(int seq, int size);
 
 
 int	init_option(int ac, char **av, t_ping *ping);

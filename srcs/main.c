@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:19 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/15 16:53:53 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/17 14:19:27 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,12 +21,14 @@ int	main(int ac, char **av)
 	(void) ac;
 	(void) av;
 	t_ping	ping;
+	long 	ret;
 	double	time_start, time_stop;
 
 	if (init_ping(&ping) == -1)	goto on_error;
 	if (init_option(ac, av, &ping) == -1)	goto on_error;
 	time_start = getftime();
-	ft_ping(&ping);
+	ret = ft_ping(&ping);
+	if (ret == 0) goto on_error;
 	time_stop = getftime();
 	dprintf(2, "tx: %d, rx: %d, total time: %.2f ms, %.3f%% packet loss\n",
 		ping.tx,
