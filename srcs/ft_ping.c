@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 16:33:18 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/17 19:36:53 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/18 15:11:23 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,19 +96,25 @@ int	ft_ping(t_ping *ping)
 
 static int	pkt_check(t_ping *ping, struct s_icmp_recv *recv_pkt)
 {
+	if (!check_icmp_checksum(&recv_pkt->icmp, ping->packet_size))
+	{
+		dprintf(2, "bad checksum found: %X\n", recv_pkt->icmp.hdr.checksum);
+		return (0);
+	}
 	if (recv_pkt->icmp.hdr.type == ICMP_ECHO)
 	{
-		dprintf(2, "bad protocol type: %d\n", recv_pkt->icmp.hdr.type);
+		dprintf(2, "bad protocol type found: %d\n", recv_pkt->icmp.hdr.type);
 		return (0);
 	}
 	if (recv_pkt->icmp.hdr.un.echo.id != getpid())
 	{
-		dprintf(2, "bad id: %d\n", recv_pkt->icmp.hdr.un.echo.id);
+		dprintf(2, "bad id found: %d\n", recv_pkt->icmp.hdr.un.echo.id);
 		return (0);
 	}
-	if (recv_pkt->icmp.hdr.un.echo.sequence != ping->sequence)
+	uint16_t ref_seq = ntohs(recv_pkt->icmp.hdr.un.echo.sequence);
+	if (ref_seq != ping->sequence)
 	{
-		dprintf(2, "bad sequence: %d\n", recv_pkt->icmp.hdr.un.echo.sequence);
+		dprintf(2, "bad sequence found: %d\n", ref_seq);
 		return (0);
 	}
 	return (1);
@@ -165,7 +171,7 @@ static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double tim
 		printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
 			ping->packet_size,
 			inet_ntop(AF_INET, &ping->dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
-			(int)icmp_hdr->un.echo.sequence,
+			(int)htons(icmp_hdr->un.echo.sequence),
 			(int)ip_hdr->ttl, time);
 	}
 	else
@@ -203,6 +209,5 @@ static int	pkt_recv(t_ping *ping, struct s_icmp_recv *pckt)
 		perror("recvfrom");
 		return -1;
 	}
-	pckt->icmp.hdr.un.echo.sequence = ntohs(pckt->icmp.hdr.un.echo.sequence);
 	return 1;
 }

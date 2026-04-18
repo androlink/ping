@@ -1,32 +1,38 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   checksum.c                                         :+:      :+:    :+:   */
+/*   memdump.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/31 17:05:46 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/15 16:16:37 by gcros            ###   ########.fr       */
+/*   Created: 2024/05/14 16:22:22 by gcros             #+#    #+#             */
+/*   Updated: 2026/04/18 15:06:26 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-unsigned short	icmp_checksum(void *pckt, int pckt_byte_count)
+#include "stddef.h"
+#include "unistd.h"
+
+void	print_v(unsigned char byte)
 {
-	unsigned short	*buff = pckt;
-	unsigned int	sum = 0;
-	unsigned short	result = 0;
+	char	p[2];
 
-	while (pckt_byte_count > 1)
+	p[1] = "0123456789abcdef"[byte & 0XF];
+	p[0] = "0123456789abcdef"[(byte >> 4) & 0XF];
+	write(1, p, 2);
+}
+
+void	ft_memdump(void *p, size_t len)
+{
+	size_t	i;
+
+	i = 0;
+	while (len--)
 	{
-		sum += *buff;
-		pckt_byte_count -= 2;
-		buff += 1;
+		print_v(((unsigned char *)p)[i]);
+		if (len)
+			write(1, " ", 1);
+		i++;
 	}
-	if (pckt_byte_count == 1)
-		sum += *((unsigned char *)buff);
-
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum += (sum >> 16);
-	result = ~sum;
-	return (result);
+	write(1, "\n", 1);
 }

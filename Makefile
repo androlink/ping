@@ -3,10 +3,11 @@ ARGS =
 CC = cc
 RMF = rm -f
 
-CFLAGS = -g -Wall -Wextra -Werror
+DEBUGFLAGS = -g -fsanitize=address
+
+CFLAGS = -g -Wall -Wextra -Werror $(DEBUGFLAGS)
 DFLAGS = -MP -MMD
 
-DEBUGFLAGS = -g -fsanitize=address
 
 SDIR = srcs
 BDIR = .build
@@ -31,7 +32,7 @@ all:
 include config/srcs.mk
 
 $(NAME) : $(OFILES)
-	$(CC) $(CFLAGS) -o $@ $(OFILES) $(LIB_FLAGS) $(DEBUGFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OFILES) $(LIB_FLAGS) 
 	@echo "$(NAME) compilation done";
 
 -include $(DFILES)
@@ -39,7 +40,7 @@ $(NAME) : $(OFILES)
 $(BDIR)/%.o : $(SDIR)/%.c Makefile
 
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@ -I $(HDIR) $(DEBUGFLAGS)
+	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@ -I $(HDIR) 
 	@echo "	$@"
 
 clean	::

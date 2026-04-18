@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/17 18:33:11 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/18 14:51:25 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,6 +100,7 @@ struct s_icmp_recv
 
 unsigned short	icmp_checksum(void *addr, int pckt_byte_count);
 struct s_icmp_packet init_icmp_packet(int seq, int size);
+int	check_icmp_checksum(struct s_icmp_packet *pckt, int size);
 
 
 int	init_option(int ac, char **av, t_ping *ping);
@@ -125,5 +126,7 @@ int			init_ping(t_ping *ping);
 void		free_ping(t_ping *ping);
 
 int			ft_ping(t_ping *ping);
+
+void	ft_memdump(void *p, size_t len);
 
 #endif
