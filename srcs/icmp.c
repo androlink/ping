@@ -6,24 +6,25 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/11 16:11:44 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/18 15:12:05 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/19 19:11:31 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_ping.h"
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 
 struct s_icmp_packet init_icmp_packet(int seq, int size)
 {
 	struct s_icmp_packet pckt = {0};
-	
+
 	pckt = (typeof(pckt)){
-		.hdr = {
-			.type = ICMP_ECHO,
-			.un.echo.id = getpid(),
-			.un.echo.sequence = htons(seq),
+		.hdr =
+			{
+				.type = ICMP_ECHO,
+				.un.echo.id = getpid(),
+				.un.echo.sequence = htons(seq),
 			},
 	};
 	memset(&pckt.buffer, 0x42, size);
@@ -34,16 +35,15 @@ struct s_icmp_packet init_icmp_packet(int seq, int size)
 	return pckt;
 }
 
-
 int	check_icmp_checksum(struct s_icmp_packet *pckt, int size)
 {
-	uint16_t old_chsm = pckt->hdr.checksum;
-
+	const uint16_t	old_chsm = pckt->hdr.checksum;
 
 	pckt->hdr.checksum = 0;
 	uint16_t chsm = icmp_checksum(
 		(unsigned short *)pckt,
-		sizeof(struct icmphdr) + size);
+		sizeof(struct icmphdr) + size
+	);
 	pckt->hdr.checksum = old_chsm;
 	return (old_chsm == chsm);
 }

@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 14:46:57 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/17 19:36:09 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/19 19:11:51 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 
 static void	print_option(void);
 
-static const struct option long_option[] = {
+static const struct option	long_option[] = {
 	{"audible", no_argument, 0, 'a'},
 	{"count", required_argument, 0, 'c'},
 	{"flood", no_argument, 0, 'f'},
@@ -36,7 +36,7 @@ static const struct option long_option[] = {
 int	init_option(int ac, char **av, t_ping *ping)
 {
 
-	int ch;
+	int	ch;
 	while ((ch = getopt_long(ac, av, "ac:fi:s:t:T:vW:h?", long_option, NULL)) != -1)
 	{
 		dprintf(2, "option found: %c with value %s\n", ch, optarg);
@@ -78,12 +78,7 @@ int	init_option(int ac, char **av, t_ping *ping)
 		dprintf(2, "argv[%d] = %s\n", i, av[i]);
 
 	char *str_addr = av[ac - 1];
-
-	if (0 == inet_pton(AF_INET, str_addr, &ping->dest_addr.sin_addr))
-	{
-		dprintf(2, "inet_pton: bad formating\n");
-		return (-1);
-	}
+	set_option(ping, OT_ADDR, &str_addr);
 
 	return 1;
 }

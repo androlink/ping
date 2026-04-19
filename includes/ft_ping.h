@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/18 14:51:25 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/19 17:47:17 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ enum e_option_type
 	OT_TIMEOUT,
 	// param type int
 	OT_TTL,
-	// param type in_addr_t
+	// param type char*
 	OT_ADDR,
 	// param type int
 	OT_TIMESTAMP,
@@ -60,7 +60,7 @@ enum e_option_type
 
 struct	s_ping
 {
-	int					sckt_fd;
+	int					sckt_fd_4;
 	int					tx;
 	int					rx;
 	int					id;
@@ -84,6 +84,8 @@ struct	s_ping
 	int					packet_size;
 
 	struct sockaddr_in	dest_addr;
+
+	int					address_family;
 };
 
 struct s_icmp_packet

@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 16:33:18 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/18 15:11:23 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/19 19:11:06 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ static int	pkt_send(t_ping *ping, struct s_icmp_packet *pckt);
 static int	pkt_recv(t_ping *ping, struct s_icmp_recv *pckt);
 static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double time);
 
-double getftime()
+double	getftime()
 {
 	struct timeval	tv;
 	gettimeofday(&tv, NULL);
@@ -42,10 +42,9 @@ int	ft_ping(t_ping *ping)
 
 
 	{
-		setsockopt(ping->sckt_fd, SOL_IP, IP_TTL, &ping->ttl, sizeof(ping->ttl));
+		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TTL, &ping->ttl, sizeof(ping->ttl));
 	}
-	
-	pfd = (typeof(pfd)){.fd = ping->sckt_fd};
+	pfd = (typeof(pfd)){.fd = ping->sckt_fd_4};
 	while (loopcount < ping->count)
 	{
 		pfd.events = poll_state;
@@ -184,7 +183,7 @@ static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double tim
 
 static int	pkt_send(t_ping *ping, struct s_icmp_packet *pckt)
 {
-	ssize_t len = sendto(ping->sckt_fd, pckt, sizeof(pckt->hdr) + ping->packet_size, 0,
+	ssize_t len = sendto(ping->sckt_fd_4, pckt, sizeof(pckt->hdr) + ping->packet_size, 0,
 			(struct sockaddr *)&ping->dest_addr, sizeof(ping->dest_addr));
 
 	if (len <= 0)
@@ -201,7 +200,7 @@ static int	pkt_recv(t_ping *ping, struct s_icmp_recv *pckt)
 	struct sockaddr_in	*target;
 	socklen_t 			addr_len = sizeof(target);
 
-	ssize_t len = recvfrom(ping->sckt_fd, pckt,
+	ssize_t len = recvfrom(ping->sckt_fd_4, pckt,
 		sizeof(*pckt), 0,
 			(struct sockaddr *)&target, &addr_len);
 	if (len <= 0)
