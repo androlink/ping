@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 16:33:18 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/19 19:11:06 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/20 17:45:37 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,13 +42,13 @@ int	ft_ping(t_ping *ping)
 
 
 	{
-		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TTL, &ping->ttl, sizeof(ping->ttl));
+		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TTL, &ping->opt.ttl, sizeof(ping->opt.ttl));
 	}
 	pfd = (typeof(pfd)){.fd = ping->sckt_fd_4};
-	while (loopcount < ping->count)
+	while (loopcount < ping->opt.count)
 	{
 		pfd.events = poll_state;
-		int timeout = (ping->timeout * 1000.) + 100;
+		int timeout = (ping->opt.timeout * 1000.) + 100;
 		timeout = timeout - time_diff;
 		ret = poll(&pfd, 1, timeout);
 		if (ret == -1)
@@ -63,8 +63,8 @@ int	ft_ping(t_ping *ping)
 		}
 		else if (ret == 0)		// on timeout
 		{
-			if (ping->flood) (void) !write(2, "\b|", 2);
-			else dprintf(2, "packet timeout: %d\n", ping->sequence);
+			if (ping->opt.flood) (void) !write(2, "\b|", 2);
+			else dprintf(2, "packet timeout: %d\n", ping->stat.sequence);
 			if (poll_state == POLLIN)
 				poll_state = POLLOUT;
 			else if (poll_state == POLLOUT)
@@ -85,9 +85,9 @@ int	ft_ping(t_ping *ping)
 				continue;
 			}
 		}
-		usleep(ping->interval * 1000000);
+		usleep(ping->opt.interval * 1000000);
 		time_diff = 0;
-		ping->sequence++;
+		ping->stat.sequence++;
 		loopcount++;
 	}
 	return loopcount;
@@ -95,26 +95,28 @@ int	ft_ping(t_ping *ping)
 
 static int	pkt_check(t_ping *ping, struct s_icmp_recv *recv_pkt)
 {
-	if (!check_icmp_checksum(&recv_pkt->icmp, ping->packet_size))
-	{
-		dprintf(2, "bad checksum found: %X\n", recv_pkt->icmp.hdr.checksum);
-		return (0);
-	}
 	if (recv_pkt->icmp.hdr.type == ICMP_ECHO)
 	{
-		dprintf(2, "bad protocol type found: %d\n", recv_pkt->icmp.hdr.type);
 		return (0);
 	}
-	if (recv_pkt->icmp.hdr.un.echo.id != getpid())
+	else if (recv_pkt->icmp.hdr.type == ICMP_ECHOREPLY)
 	{
-		dprintf(2, "bad id found: %d\n", recv_pkt->icmp.hdr.un.echo.id);
-		return (0);
-	}
-	uint16_t ref_seq = ntohs(recv_pkt->icmp.hdr.un.echo.sequence);
-	if (ref_seq != ping->sequence)
-	{
-		dprintf(2, "bad sequence found: %d\n", ref_seq);
-		return (0);
+		if (!check_icmp_checksum(&recv_pkt->icmp, ping->opt.packet_size))
+		{
+			dprintf(2, "bad checksum found: %X\n", recv_pkt->icmp.hdr.checksum);
+			return (0);
+		}
+		if (recv_pkt->icmp.hdr.un.echo.id != ping->id)
+		{
+			dprintf(2, "bad id found: %d\n", recv_pkt->icmp.hdr.un.echo.id);
+			return (0);
+		}
+		uint16_t ref_seq = ntohs(recv_pkt->icmp.hdr.un.echo.sequence);
+		if (ref_seq != ping->stat.sequence)
+		{
+			dprintf(2, "bad sequence found: %d\n", ref_seq);
+			return (0);
+		}
 	}
 	return (1);
 }
@@ -126,13 +128,13 @@ static int	ping_routine(t_ping *ping, int *poll_state, double	*time_start)
 	double					time_stop;
 
 	if (*poll_state == POLLOUT){
-		pckt = init_icmp_packet(ping->sequence, ping->packet_size);
+		pckt = init_icmp_packet(ping->stat.sequence, ping->opt.packet_size);
 		*time_start = getftime();
-		ping->tx++;
+		ping->stat.tx++;
 		if (pkt_send(ping, &pckt) == -1)
 			return (-1);
-		if (ping->audible) (void) !write(2, "\a", 1);
-		if (ping->flood) (void) !write(2, ".", 1);
+		if (ping->opt.audible) (void) !write(2, "\a", 1);
+		if (ping->opt.flood) (void) !write(2, ".", 1);
 		*poll_state = POLLIN;
 		return (2);
 	}
@@ -145,8 +147,8 @@ static int	ping_routine(t_ping *ping, int *poll_state, double	*time_start)
 		{
 			return (0);
 		}
-		*poll_state = POLLOUT;
-		process_reply(ping, &recv_pkt, time_stop - *time_start);
+		if (process_reply(ping, &recv_pkt, time_stop - *time_start))
+			*poll_state = POLLOUT;
 	}
 	return (1);
 }
@@ -156,20 +158,23 @@ static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double tim
 	const struct iphdr		*ip_hdr = &recv_pckt->ip; 
 	const struct icmphdr	*icmp_hdr = &recv_pckt->icmp.hdr;
 
-	
 	if (icmp_hdr->type == ICMP_TIME_EXCEEDED)
 	{
-		printf("%d bytes from %s: icmp_seq=%d Time to live exceeded\n",
-			ping->packet_size, "todo", (int)icmp_hdr->un.echo.sequence);
+		char dest_ip[50];
+		printf("%d bytes from %s (%s):  Time to live exceeded\n",
+			ping->opt.packet_size,
+			"todo",
+			inet_ntop(AF_INET, &recv_pckt->ip.saddr, dest_ip, sizeof(dest_ip))
+		);
 	}
 	else if (icmp_hdr->type == ICMP_ECHOREPLY)
 	{
-		ping->rx++;
+		ping->stat.rx++;
 		char dest_ip[50];
-		if (ping->flood) (void) !write(2, "\b", 2);
+		if (ping->opt.flood) (void) !write(2, "\b", 2);
 		printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
-			ping->packet_size,
-			inet_ntop(AF_INET, &ping->dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
+			ping->opt.packet_size,
+			inet_ntop(AF_INET, &ping->opt.dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
 			(int)htons(icmp_hdr->un.echo.sequence),
 			(int)ip_hdr->ttl, time);
 	}
@@ -183,8 +188,8 @@ static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double tim
 
 static int	pkt_send(t_ping *ping, struct s_icmp_packet *pckt)
 {
-	ssize_t len = sendto(ping->sckt_fd_4, pckt, sizeof(pckt->hdr) + ping->packet_size, 0,
-			(struct sockaddr *)&ping->dest_addr, sizeof(ping->dest_addr));
+	ssize_t len = sendto(ping->sckt_fd_4, pckt, sizeof(pckt->hdr) + ping->opt.packet_size, 0,
+			(struct sockaddr *)&ping->opt.dest_addr, sizeof(ping->opt.dest_addr));
 
 	if (len <= 0)
 	{
@@ -192,7 +197,7 @@ static int	pkt_send(t_ping *ping, struct s_icmp_packet *pckt)
 		return -1;
 	}
 
-	return 1;
+	return len;
 }
 
 static int	pkt_recv(t_ping *ping, struct s_icmp_recv *pckt)
@@ -202,11 +207,11 @@ static int	pkt_recv(t_ping *ping, struct s_icmp_recv *pckt)
 
 	ssize_t len = recvfrom(ping->sckt_fd_4, pckt,
 		sizeof(*pckt), 0,
-			(struct sockaddr *)&target, &addr_len);
+		(struct sockaddr *)&target, &addr_len);
 	if (len <= 0)
 	{
 		perror("recvfrom");
 		return -1;
 	}
-	return 1;
+	return len;
 }

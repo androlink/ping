@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/11 12:55:20 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/19 19:08:19 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/20 17:54:23 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,25 +42,29 @@ int	init_ping(t_ping *ping)
 	}
 
 	*ping = (t_ping){
-		.rx = 0,
-		.tx = 0,
 		.sckt_fd_4 = sckt,
 		.id = getpid(),
-		.dest_addr = (typeof(ping->dest_addr)){
-			.sin_addr.s_addr = 0,
-			.sin_family = AF_INET,
+		.stat = {
+			.rx = 0,
+			.tx = 0,
+
+			.sequence = 1,
 		},
-		.flood = 0,
-		.interval = 1,
-		.timeout = 1,
-		.ttl = 64,
-		.count = MAX_COUNT,
-		.audible = 0,
-		.timestamp = 0,
-		.sequence = 1,
-		.packet_size = 64,
-		.verbose = 0,
-		.address_family = AF_INET,
+		.opt = {
+			.dest_addr = (typeof(ping->opt.dest_addr)){
+				.sin_addr.s_addr = 0,
+				.sin_family = AF_INET,
+			},
+			.flood = 0,
+			.interval = 1,
+			.timeout = 1,
+			.ttl = 64,
+			.count = MAX_COUNT,
+			.audible = 0,
+			.timestamp = 0,
+			.packet_size = 56,
+			.verbose = 0,
+		}
 	};
 	return (1);
 	on_error:
@@ -85,16 +89,16 @@ int	set_option(t_ping *ping, enum e_option_type type, void *param)
 
 	switch (type)
 	{
-		OPT_CASE(OT_FLOOD, ping->flood);
-		OPT_CASE(OT_COUNT, ping->count);
-		OPT_CASE(OT_INTERVAL, ping->interval);
-		OPT_CASE(OT_TIMEOUT, ping->timeout);
-		OPT_CASE(OT_TTL, ping->ttl);
-		OPT_CASE(OT_AUDIBLE, ping->audible);
-		OPT_CASE(OT_TIMESTAMP, ping->timestamp);
-		OPT_CASE(OT_VERBOSE, ping->verbose);
-		OPT_CASE(OT_SEQUENCE, ping->sequence);
-		OPT_CASE(OT_SIZE, ping->packet_size);
+		OPT_CASE(OT_FLOOD, ping->opt.flood);
+		OPT_CASE(OT_COUNT, ping->opt.count);
+		OPT_CASE(OT_INTERVAL, ping->opt.interval);
+		OPT_CASE(OT_TIMEOUT, ping->opt.timeout);
+		OPT_CASE(OT_TTL, ping->opt.ttl);
+		OPT_CASE(OT_AUDIBLE, ping->opt.audible);
+		OPT_CASE(OT_TIMESTAMP, ping->opt.timestamp);
+		OPT_CASE(OT_VERBOSE, ping->opt.verbose);
+		OPT_CASE(OT_SEQUENCE, ping->stat.sequence);
+		OPT_CASE(OT_SIZE, ping->opt.packet_size);
 		case OT_ADDR:
 			char *addr = *(typeof(addr) *)param;
 			return (address_resolution(ping, addr));
@@ -115,13 +119,13 @@ int address_resolution(t_ping *ping, char *addr)
 	struct addrinfo *result;
 
     struct addrinfo hints = {
-        .ai_family = ping->address_family,
+        .ai_family = AF_INET,
         .ai_socktype = SOCK_RAW
     };
 	
 	if (getaddrinfo(addr, NULL, &hints, &result) != 0)
 	{
-		dprintf(2, "Failed to resolve server address '%s': %s\n",
+		dprintf(2, "Failed to resolve address '%s': %s\n",
                 addr, "todo");
 		return (-1);
 	}
@@ -135,8 +139,12 @@ int address_resolution(t_ping *ping, char *addr)
 		if (resa != 0 || resn != 0)
 			continue;
 		printf("Hostname for %s: %s\n", hostaddr, hostname);
-		if (inet_pton(ai->ai_addr->sa_family, hostaddr, &ping->dest_addr.sin_addr))
+		if (inet_pton(AF_INET, hostaddr, &ping->opt.dest_addr.sin_addr) != 1)
+		{
+			dprintf(2, "Failed to resolve address '%s'\n",
+                hostaddr);
 			goto on_error;
+		}
 		break ;
 	}
 	freeaddrinfo(result);
@@ -144,4 +152,10 @@ int address_resolution(t_ping *ping, char *addr)
 	on_error:
 	freeaddrinfo(result);
 	return (-1);
+}
+
+int	reset_stats(t_ping *ping)
+{
+	ping->stat = (typeof(ping->stat)){0};
+	return 1;
 }

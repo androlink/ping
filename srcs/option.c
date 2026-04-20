@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 14:46:57 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/19 19:11:51 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/20 15:52:25 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,6 @@ int	init_option(int ac, char **av, t_ping *ping)
 	int	ch;
 	while ((ch = getopt_long(ac, av, "ac:fi:s:t:T:vW:h?", long_option, NULL)) != -1)
 	{
-		dprintf(2, "option found: %c with value %s\n", ch, optarg);
 		if (ch == '?' || ch == 'h')
 		{
 			print_option();
@@ -73,14 +72,7 @@ int	init_option(int ac, char **av, t_ping *ping)
 			set_option(ping, OT_SIZE, &s);
 		}
 	}
-
-	for (int i = 0; i < ac; i++)
-		dprintf(2, "argv[%d] = %s\n", i, av[i]);
-
-	char *str_addr = av[ac - 1];
-	set_option(ping, OT_ADDR, &str_addr);
-
-	return 1;
+	return optind;
 }
 
 static void	print_option(void)

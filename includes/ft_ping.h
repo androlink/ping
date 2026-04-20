@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/19 17:47:17 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/20 16:31:41 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,31 +61,36 @@ enum e_option_type
 struct	s_ping
 {
 	int					sckt_fd_4;
-	int					tx;
-	int					rx;
 	int					id;
-	// print a '\a' when send
-	int					audible;
-	// print a '.' when send
-	int					flood;
-	int					verbose;
-	int					timestamp;
-	// packet time to live in second
-	int					ttl;
-	// packet timeout in second
-	double				timeout;
-	// send interval in second
-	double				interval;
 
-	long				count;
+	struct {
+		int					tx;
+		int					rx;
+		double				min;
+		double				max;
+		double				avg;
+		double				stddev;
+		short				sequence;
+	}	stat;
 
-	short				sequence;
+	struct {
+		struct sockaddr_in	dest_addr;
+		// print a '\a' when send
+		int					audible;
+		// print a '.' when send
+		int					flood;
+		int					verbose;
+		int					timestamp;
+		// packet time to live in second
+		int					ttl;
+		// packet timeout in second
+		double				timeout;
+		// send interval in second
+		double				interval;
+		long				count;
 
-	int					packet_size;
-
-	struct sockaddr_in	dest_addr;
-
-	int					address_family;
+		int					packet_size;
+	}	opt;
 };
 
 struct s_icmp_packet
@@ -126,6 +131,7 @@ double getftime();
 
 int			init_ping(t_ping *ping);
 void		free_ping(t_ping *ping);
+int			reset_stats(t_ping *ping);
 
 int			ft_ping(t_ping *ping);
 
