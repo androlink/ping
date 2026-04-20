@@ -4,3 +4,5 @@ ft_ping
 *.dump
 *.strings
 *.txt
+*.ltrace
+*.strace
