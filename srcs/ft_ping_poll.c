@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_ping.c                                          :+:      :+:    :+:   */
+/*   ft_ping_poll.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 16:33:18 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/20 17:45:37 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/22 18:28:20 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ double	getftime()
 	return (tv.tv_sec * 1000. + tv.tv_usec / 1000.);
 }
 
-int	ft_ping(t_ping *ping)
+int	ft_ping_poll(t_ping *ping)
 {
 	int				poll_state = POLLOUT;
 	long			loopcount = 0;

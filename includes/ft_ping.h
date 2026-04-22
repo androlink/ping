@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/20 16:31:41 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/22 18:28:36 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,8 @@ struct	s_ping
 		long				count;
 
 		int					packet_size;
+
+		int					preload;
 	}	opt;
 };
 
@@ -134,6 +136,9 @@ void		free_ping(t_ping *ping);
 int			reset_stats(t_ping *ping);
 
 int			ft_ping(t_ping *ping);
+int			ft_ping_poll(t_ping *ping);
+int			ft_ping_select(t_ping *ping);
+
 
 void	ft_memdump(void *p, size_t len);
 

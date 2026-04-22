@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:19 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/20 16:31:52 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/22 20:24:32 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,8 @@ int	main(int ac, char **av)
 	return (-1);
 }
 
+typeof(ft_ping) *ft_ping_ptr = ft_ping_poll;
+
 int	ping_addr(t_ping *ping, char *addr)
 {
 	char dest_ip[50];
@@ -59,7 +61,7 @@ int	ping_addr(t_ping *ping, char *addr)
 		inet_ntop(AF_INET, &ping->opt.dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
 		ping->opt.packet_size
 	);
-	int ret = ft_ping(ping);
+	int ret = ft_ping_ptr(ping);
 	if (ret == -1)	return -1;
 	dprintf(1, "--- %s ping statistics ---\n", addr);
 	dprintf(1, "%d packets transmitted, %d packet reeived, %3.2f%% packet loss\n",
