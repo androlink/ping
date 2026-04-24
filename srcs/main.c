@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:19 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/22 20:24:32 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/24 17:13:37 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ int	main(int ac, char **av)
 	return (-1);
 }
 
-typeof(ft_ping) *ft_ping_ptr = ft_ping_poll;
+typeof(ft_ping) *ft_ping_ptr = ft_ping_select;
 
 int	ping_addr(t_ping *ping, char *addr)
 {
@@ -64,10 +64,15 @@ int	ping_addr(t_ping *ping, char *addr)
 	int ret = ft_ping_ptr(ping);
 	if (ret == -1)	return -1;
 	dprintf(1, "--- %s ping statistics ---\n", addr);
-	dprintf(1, "%d packets transmitted, %d packet reeived, %3.2f%% packet loss\n",
+	dprintf(1, "%d packets transmitted, %d packet received, %3.2f%% packet loss\n",
 		ping->stat.tx, ping->stat.rx,
 		(1. - (ping->stat.rx / (double)ping->stat.tx)) * 100);
-	//drintf(1, "round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n");
+	dprintf(1, "round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n",
+		ping->stat.min,
+		ping->stat.avg,
+		ping->stat.max,
+		ping->stat.stddev
+		);
 
 	return 1;
 }

@@ -6,15 +6,15 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/22 18:28:36 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/24 16:10:04 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef FT_PING_H
 # define FT_PING_H
 
-#include <netinet/ip_icmp.h>
 #include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <sys/time.h>
 #include <errno.h>
 
@@ -101,7 +101,7 @@ struct s_icmp_packet
 	char 	buffer[PKT_MAX_SIZE - sizeof(struct	icmphdr)];
 };
 
-struct s_icmp_recv
+struct s_ip_icmp
 {
 	struct iphdr			ip;
 	struct s_icmp_packet	icmp;
@@ -110,6 +110,14 @@ struct s_icmp_recv
 unsigned short	icmp_checksum(void *addr, int pckt_byte_count);
 struct s_icmp_packet init_icmp_packet(int seq, int size);
 int	check_icmp_checksum(struct s_icmp_packet *pckt, int size);
+
+void tv_print(struct timeval *tv);
+struct timeval tv_norm(struct timeval *tv);
+struct timeval tv_sub(struct timeval *tv1, struct timeval *tv2);
+struct timeval tv_add(struct timeval *tv1, struct timeval *tv2);
+struct timeval tv_from_double(double val);
+double tv_to_double(struct timeval *tv);
+double	getftime();
 
 
 int	init_option(int ac, char **av, t_ping *ping);

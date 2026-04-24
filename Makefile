@@ -32,7 +32,7 @@ all:
 include config/srcs.mk
 
 $(NAME) : $(OFILES)
-	$(CC) $(CFLAGS) -o $@ $(OFILES) $(LIB_FLAGS) 
+	$(CC) $(CFLAGS) -o $@ $(OFILES) $(LIB_FLAGS) -lm
 	@echo "$(NAME) compilation done";
 
 -include $(DFILES)

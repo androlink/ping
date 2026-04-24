@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 16:33:18 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/22 18:28:20 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/23 16:38:35 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,8 @@
 
 static int	ping_routine(t_ping *ping, int *poll_state, double	*time_start);
 static int	pkt_send(t_ping *ping, struct s_icmp_packet *pckt);
-static int	pkt_recv(t_ping *ping, struct s_icmp_recv *pckt);
-static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double time);
+static int	pkt_recv(t_ping *ping, struct s_ip_icmp *pckt);
+static int	process_reply(t_ping *ping, struct s_ip_icmp *recv_pckt, double time);
 
 double	getftime()
 {
@@ -93,7 +93,7 @@ int	ft_ping_poll(t_ping *ping)
 	return loopcount;
 }
 
-static int	pkt_check(t_ping *ping, struct s_icmp_recv *recv_pkt)
+static int	pkt_check(t_ping *ping, struct s_ip_icmp *recv_pkt)
 {
 	if (recv_pkt->icmp.hdr.type == ICMP_ECHO)
 	{
@@ -124,7 +124,7 @@ static int	pkt_check(t_ping *ping, struct s_icmp_recv *recv_pkt)
 static int	ping_routine(t_ping *ping, int *poll_state, double	*time_start)
 {
 	struct s_icmp_packet	pckt;
-	struct s_icmp_recv		recv_pkt;
+	struct s_ip_icmp		recv_pkt;
 	double					time_stop;
 
 	if (*poll_state == POLLOUT){
@@ -153,7 +153,7 @@ static int	ping_routine(t_ping *ping, int *poll_state, double	*time_start)
 	return (1);
 }
 
-static int	process_reply(t_ping *ping, struct s_icmp_recv *recv_pckt, double time)
+static int	process_reply(t_ping *ping, struct s_ip_icmp *recv_pckt, double time)
 {
 	const struct iphdr		*ip_hdr = &recv_pckt->ip; 
 	const struct icmphdr	*icmp_hdr = &recv_pckt->icmp.hdr;
@@ -200,7 +200,7 @@ static int	pkt_send(t_ping *ping, struct s_icmp_packet *pckt)
 	return len;
 }
 
-static int	pkt_recv(t_ping *ping, struct s_icmp_recv *pckt)
+static int	pkt_recv(t_ping *ping, struct s_ip_icmp *pckt)
 {
 	struct sockaddr_in	*target;
 	socklen_t 			addr_len = sizeof(target);
