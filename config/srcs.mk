@@ -7,3 +7,4 @@ SRCS += icmp.c
 SRCS += option.c
 SRCS += memdump.c
 SRCS += time_machine.c
+SRCS += stat.c

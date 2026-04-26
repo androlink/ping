@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 14:46:57 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/20 15:52:25 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/25 14:59:40 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ static const struct option	long_option[] = {
 	{"timeout", required_argument, 0, 'W'},
 	{"verbose", no_argument, 0, 'v'},
 	{"help", required_argument, 0, 'h'},
+	{"preload", required_argument, 0, 'l'},
 	{0},
 };
 
@@ -37,7 +38,7 @@ int	init_option(int ac, char **av, t_ping *ping)
 {
 
 	int	ch;
-	while ((ch = getopt_long(ac, av, "ac:fi:s:t:T:vW:h?", long_option, NULL)) != -1)
+	while ((ch = getopt_long(ac, av, "ac:fi:l:s:t:T:vW:h?", long_option, NULL)) != -1)
 	{
 		if (ch == '?' || ch == 'h')
 		{
@@ -70,6 +71,9 @@ int	init_option(int ac, char **av, t_ping *ping)
 		}else if (ch == 's'){
 			int s = strtol(optarg, NULL, 10);
 			set_option(ping, OT_SIZE, &s);
+		}else if(ch == 'l') {
+			int s = strtol(optarg, NULL, 10);
+			set_option(ping, OT_PRELOAD, &s);
 		}
 	}
 	return optind;

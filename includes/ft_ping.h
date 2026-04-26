@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:35 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/24 16:10:04 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/26 18:38:52 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,14 @@ enum e_option_type
 	OT_SEQUENCE,
 	// param type int
 	OT_SIZE,
+	// param type int
+	OT_PRELOAD,
+};
+
+struct s_stddev
+{
+	double agregator_si;
+	double agregator_sq;
 };
 
 struct	s_ping
@@ -69,7 +77,7 @@ struct	s_ping
 		double				min;
 		double				max;
 		double				avg;
-		double				stddev;
+		struct s_stddev		stddev;
 		short				sequence;
 	}	stat;
 
@@ -83,6 +91,8 @@ struct	s_ping
 		int					timestamp;
 		// packet time to live in second
 		int					ttl;
+		// type of service
+		int					tos;
 		// packet timeout in second
 		double				timeout;
 		// send interval in second
@@ -107,17 +117,20 @@ struct s_ip_icmp
 	struct s_icmp_packet	icmp;
 };
 
-unsigned short	icmp_checksum(void *addr, int pckt_byte_count);
-struct s_icmp_packet init_icmp_packet(int seq, int size);
-int	check_icmp_checksum(struct s_icmp_packet *pckt, int size);
+unsigned short			icmp_checksum(void *addr, int pckt_byte_count);
+struct s_icmp_packet	init_icmp_packet(int seq, int size);
+int						check_icmp_checksum(struct s_icmp_packet *pckt, int size);
 
-void tv_print(struct timeval *tv);
-struct timeval tv_norm(struct timeval *tv);
-struct timeval tv_sub(struct timeval *tv1, struct timeval *tv2);
-struct timeval tv_add(struct timeval *tv1, struct timeval *tv2);
-struct timeval tv_from_double(double val);
-double tv_to_double(struct timeval *tv);
-double	getftime();
+void			tv_print(struct timeval *tv);
+struct timeval	tv_norm(struct timeval *tv);
+struct timeval	tv_sub(struct timeval *tv1, struct timeval *tv2);
+struct timeval	tv_add(struct timeval *tv1, struct timeval *tv2);
+struct timeval	tv_from_double(double val);
+double 			tv_to_double(struct timeval *tv);
+double			getftime();
+
+struct s_stddev	stddef_append(struct s_stddev aggregator, double time);
+double			avg_append(double avg_agregator, int count, double num);
 
 
 int	init_option(int ac, char **av, t_ping *ping);

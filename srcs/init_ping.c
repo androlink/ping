@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/11 12:55:20 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/20 17:54:23 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/25 14:58:09 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,12 +44,7 @@ int	init_ping(t_ping *ping)
 	*ping = (t_ping){
 		.sckt_fd_4 = sckt,
 		.id = getpid(),
-		.stat = {
-			.rx = 0,
-			.tx = 0,
-
-			.sequence = 1,
-		},
+		.stat = {0},
 		.opt = {
 			.dest_addr = (typeof(ping->opt.dest_addr)){
 				.sin_addr.s_addr = 0,
@@ -58,7 +53,8 @@ int	init_ping(t_ping *ping)
 			.flood = 0,
 			.interval = 1,
 			.timeout = 1,
-			.ttl = 64,
+			.ttl = 0,
+			.tos = 0,
 			.count = MAX_COUNT,
 			.audible = 0,
 			.timestamp = 0,
@@ -99,6 +95,7 @@ int	set_option(t_ping *ping, enum e_option_type type, void *param)
 		OPT_CASE(OT_VERBOSE, ping->opt.verbose);
 		OPT_CASE(OT_SEQUENCE, ping->stat.sequence);
 		OPT_CASE(OT_SIZE, ping->opt.packet_size);
+		OPT_CASE(OT_PRELOAD, ping->opt.preload);
 		case OT_ADDR:
 			char *addr = *(typeof(addr) *)param;
 			return (address_resolution(ping, addr));

@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 15:59:19 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/24 17:13:37 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/26 18:42:00 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,8 @@
 
 // slow ping 5.149.253.24
 
-int	ping_addr(t_ping *ping, char *addr);
+int		ping_addr(t_ping *ping, char *addr);
+void	print_stat(t_ping *ping, char *addr);
 
 int	main(int ac, char **av)
 {
@@ -63,6 +64,21 @@ int	ping_addr(t_ping *ping, char *addr)
 	);
 	int ret = ft_ping_ptr(ping);
 	if (ret == -1)	return -1;
+	print_stat(ping, addr);
+
+	return 1;
+}
+
+#include <math.h>
+
+void	print_stat(t_ping *ping, char *addr)
+{
+
+	double stddev = ping->stat.stddev.agregator_sq
+		- 2. * ping->stat.avg * ping->stat.stddev.agregator_si
+		+ ping->stat.avg * ping->stat.avg * (double)ping->stat.rx;
+
+	stddev = sqrt(stddev / (double)ping->stat.rx);
 	dprintf(1, "--- %s ping statistics ---\n", addr);
 	dprintf(1, "%d packets transmitted, %d packet received, %3.2f%% packet loss\n",
 		ping->stat.tx, ping->stat.rx,
@@ -71,8 +87,6 @@ int	ping_addr(t_ping *ping, char *addr)
 		ping->stat.min,
 		ping->stat.avg,
 		ping->stat.max,
-		ping->stat.stddev
+		stddev
 		);
-
-	return 1;
 }

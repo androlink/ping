@@ -6,7 +6,7 @@
 /*   By: gcros <gcros@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 18:27:36 by gcros             #+#    #+#             */
-/*   Updated: 2026/04/24 17:25:30 by gcros            ###   ########.fr       */
+/*   Updated: 2026/04/26 18:49:58 by gcros            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ static ssize_t ping_send(t_ping *ping);
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf);
 static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, struct timeval *start);
 
-int	stop;
+volatile int	stop;
 
 void	sighandler(int)
 {
@@ -38,22 +38,27 @@ int ft_ping_select(t_ping *ping)
 	stop = 0;
 
 	signal(SIGINT, sighandler);
+	if (ping->opt.ttl != 0)
+		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TTL, &ping->opt.ttl, sizeof(ping->opt.ttl));
+	if (ping->opt.tos != 0)
+		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TOS, &ping->opt.tos, sizeof(ping->opt.tos));
+	if (ping->opt.flood)
+		ping->opt.interval = 0.01;
 
-	//interval = tv_from_double(ping->opt.interval);
+	// interval = tv_from_double(ping->opt.interval);
 
 	for (long preload_count = 0; preload_count < ping->opt.preload; preload_count++)
 	{
-		ping_send(ping);
+		if (ping_send(ping) == -1) goto error;
 	}
 
-	ping_send(ping);
+	if (ping_send(ping) == -1) goto error;
 	gettimeofday(&start, NULL);
 	while (!stop)
 	{
 		select_timeout = tv_from_double(ping->opt.timeout);
 		FD_ZERO(&rfd);
 		FD_SET(ping->sckt_fd_4, &rfd);
-		//gettimeofday(NULL, NULL);
 		tv_print(&select_timeout);
 		ret = select(ping->sckt_fd_4 + 1, &rfd, 0, 0, &select_timeout);
 		if (ret == -1)
@@ -79,8 +84,7 @@ int ft_ping_select(t_ping *ping)
 		{
 			// timeout
 			dprintf(2, "timeout\n");
-			if (ping_send(ping) == -1)
-				goto error;
+			if (ping_send(ping) == -1) goto error;
 			gettimeofday(&start, NULL);
 		}
 		if (ping->stat.tx >= ping->opt.count)
@@ -143,11 +147,11 @@ static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, struct time
 			inet_ntop(AF_INET, &ping->opt.dest_addr.sin_addr, ntop_buffer, sizeof(ntop_buffer)),
 			(int)htons(icmp_hdr->un.echo.sequence),
 			(int)ip_hdr->ttl, ping_time);
-			ping->stat.rx++;
-			ping->stat.avg = (ping->stat.avg * (ping->stat.rx - 1) + ping_time) / ping->stat.rx;
+			ping->stat.avg = avg_append(ping->stat.avg, ping->stat.rx, ping_time);
 			ping->stat.min = ping->stat.min == 0. ? ping_time : fmin(ping->stat.min, ping_time);
-			ping->stat.max = fmax(ping->stat.min, ping_time);
-			(void) ping->stat.stddev;
+			ping->stat.max = ping->stat.max == 0. ? ping_time : fmax(ping->stat.max, ping_time);
+			ping->stat.stddev = stddef_append(ping->stat.stddev, ping_time);
+			ping->stat.rx++;
 			return 1;
 		break;
 		case ICMP_ECHO:
