@@ -1,0 +1,55 @@
+#include "../include/ft_ping.h"
+#include <string.h>
+#include <unistd.h>
+
+struct s_icmp_packet init_icmp_packet(int seq, int size)
+{
+	struct s_icmp_packet pckt = {0};
+
+	pckt = (typeof(pckt)){
+		.hdr =
+			{
+				.type = ICMP_ECHO,
+				.un.echo.id = getpid(),
+				.un.echo.sequence = htons(seq),
+			},
+	};
+	memset(&pckt.buffer, 0x42, size);
+	pckt.hdr.checksum = icmp_checksum((unsigned short *)&pckt, sizeof(struct icmphdr) + size);
+	return pckt;
+}
+
+int is_icmp(struct s_ip_icmp *recv_packet)
+{
+	return (recv_packet->ip.protocol == 0x01);
+}
+
+int check_icmp_checksum(struct s_icmp_packet *pckt, int size)
+{
+	const uint16_t pckt_chsm = pckt->hdr.checksum;
+
+	pckt->hdr.checksum = 0;
+	uint16_t chsm = icmp_checksum((unsigned short *)pckt, sizeof(struct icmphdr) + size);
+	pckt->hdr.checksum = pckt_chsm;
+	return (pckt_chsm == chsm);
+}
+
+unsigned short icmp_checksum(void *pckt, int pckt_byte_count)
+{
+	unsigned short *buff = pckt;
+	unsigned int sum = 0;
+	unsigned short result = 0;
+
+	while (pckt_byte_count > 1) {
+		sum += *buff;
+		pckt_byte_count -= 2;
+		buff += 1;
+	}
+	if (pckt_byte_count == 1)
+		sum += *((unsigned char *)buff);
+
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+	result = ~sum;
+	return (result);
+}

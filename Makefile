@@ -5,14 +5,14 @@ RMF = rm -f
 
 DEBUGFLAGS = -g -fsanitize=address
 
-CFLAGS = -g -Wall -Wextra -Werror $(DEBUGFLAGS)
+CFLAGS = -Wall -Wextra -Werror $(DEBUGFLAGS)
 DFLAGS = -MP -MMD
 
 
-SDIR = srcs
+SDIR = src
 BDIR = .build
 DDIR = $(BDIR)
-HDIR = includes/
+HDIR = include/
 
 SRCS :=
 
@@ -40,7 +40,7 @@ $(NAME) : $(OFILES)
 $(BDIR)/%.o : $(SDIR)/%.c Makefile
 
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@ -I $(HDIR) 
+	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@ -I $(HDIR)
 	@echo "	$@"
 
 clean	::

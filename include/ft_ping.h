@@ -120,6 +120,7 @@ struct s_ip_icmp
 unsigned short			icmp_checksum(void *addr, int pckt_byte_count);
 struct s_icmp_packet	init_icmp_packet(int seq, int size);
 int						check_icmp_checksum(struct s_icmp_packet *pckt, int size);
+int                     is_icmp(struct s_ip_icmp *recv_packet);
 
 void			tv_print(struct timeval *tv);
 struct timeval	tv_norm(struct timeval *tv);
@@ -159,6 +160,7 @@ int			reset_stats(t_ping *ping);
 int			ft_ping(t_ping *ping);
 int			ft_ping_poll(t_ping *ping);
 int			ft_ping_select(t_ping *ping);
+void        ft_ping_print(t_ping *ping, struct s_ip_icmp *recv_packet, double ping_time);
 
 
 void	ft_memdump(void *p, size_t len);
