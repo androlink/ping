@@ -3,7 +3,7 @@ ARGS =
 CC = cc
 RMF = rm -f
 
-DEBUGFLAGS = -g -fsanitize=address
+DEBUGFLAGS = -g
 
 CFLAGS = -Wall -Wextra -Werror $(DEBUGFLAGS)
 DFLAGS = -MP -MMD
@@ -65,3 +65,7 @@ valgrind: all
 
 
 .PHONY: clean re fclean force all norm run valgrind
+
+docker: | all
+	docker build -t ping .
+	docker run -it --rm -v "./:/workspace" -w /workspace --name ping ping /bin/bash

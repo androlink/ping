@@ -119,7 +119,7 @@ int address_resolution(t_ping *ping, char *addr)
 		int resa = getnameinfo(ai->ai_addr, ai->ai_addrlen, hostname, sizeof(hostname), NULL, 0, 0);
 		if (resa != 0 || resn != 0)
 			continue;
-		dprintf(1, "Hostname for %s: %s\n", hostaddr, hostname);
+		dprintf(2, "Hostname for %s: %s\n", hostaddr, hostname);
 		if (inet_pton(AF_INET, hostaddr, &ping->opt.dest_addr.sin_addr) != 1) {
 			dprintf(2, "Failed to resolve address '%s'\n", hostaddr);
 			goto on_error;

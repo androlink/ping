@@ -11,6 +11,8 @@
 int ping_addr(t_ping *ping, char *addr);
 void print_stat(t_ping *ping, char *addr);
 
+void close(int);
+
 int main(int ac, char **av)
 {
 	(void)ac;
@@ -48,9 +50,12 @@ int ping_addr(t_ping *ping, char *addr)
 
 	if (set_option(ping, OT_ADDR, &addr) == -1)
 		return (-1);
-	dprintf(1, "PING %s (%s): %d data bytes\n", addr,
+	dprintf(1, "PING %s (%s): %d data bytes", addr,
 			inet_ntop(AF_INET, &ping->opt.dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
 			ping->opt.packet_size);
+	if (ping->opt.verbose)
+		dprintf(1, ", id 0x%x = %d", ping->id, ping->id);
+	dprintf(1, "\n");
 	int ret = ft_ping_ptr(ping);
 	if (ret == -1)
 		return -1;

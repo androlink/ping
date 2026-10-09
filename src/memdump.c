@@ -3,7 +3,7 @@
 #include "stddef.h"
 #include "unistd.h"
 
-void print_v(unsigned char byte)
+static void print_byte(unsigned char byte)
 {
 	char p[2];
 
@@ -18,7 +18,7 @@ void ft_memdump(void *p, size_t len)
 
 	i = 0;
 	while (len--) {
-		print_v(((unsigned char *)p)[i]);
+		print_byte(((unsigned char *)p)[i]);
 		if (len)
 			write(1, " ", 1);
 		i++;

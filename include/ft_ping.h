@@ -160,7 +160,7 @@ int			reset_stats(t_ping *ping);
 int			ft_ping(t_ping *ping);
 int			ft_ping_poll(t_ping *ping);
 int			ft_ping_select(t_ping *ping);
-void        ft_ping_print(t_ping *ping, struct s_ip_icmp *recv_packet, double ping_time);
+void        ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double ping_time);
 
 
 void	ft_memdump(void *p, size_t len);

@@ -6,13 +6,13 @@
 # Command
 
 - [x] dns resolution
-- [ ] ping stats
+- [x] ping stats
 - [x] select
 - [x] options
 - [x] socket
-- [ ] recv result
-- [ ] verbose
-- [ ] count
+- [x] recv result
+- [x] verbose
+- [x] count
 - [ ] flood
 - [ ] interval
 - [x] size

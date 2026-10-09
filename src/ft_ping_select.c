@@ -23,7 +23,7 @@ static ssize_t ping_send(t_ping *ping);
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf);
 static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, struct timeval *start);
 
-volatile int stop;
+volatile int stop = 0;
 
 void sighandler(int _)
 {
@@ -38,7 +38,6 @@ int ft_ping_select(t_ping *ping)
 	struct s_ip_icmp recv_packet;
 	struct timeval select_timeout, start;
 	// struct timeval interval;
-	stop = 0;
 
 	signal(SIGINT, sighandler);
 	if (ping->opt.ttl != 0)
