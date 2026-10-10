@@ -37,6 +37,10 @@ int init_option(int ac, char **av, t_ping *ping)
 		else if (ch == 'f') {
 			int f = 1;
 			set_option(ping, OT_FLOOD, &f);
+			double i = 0.0;
+			set_option(ping, OT_INTERVAL, &i);
+			i = 0.030;
+			set_option(ping, OT_TIMEOUT, &i);
 		}
 		else if (ch == 'i') {
 			double i = strtod(optarg, NULL);

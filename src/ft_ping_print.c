@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 static void print_reply(const struct s_ip_icmp *recv_packet, double ping_time);
 static void print_ttl(const struct s_ip_icmp *recv_packet);
@@ -22,7 +23,10 @@ void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double pin
 		print_echo();
 		break;
 	case ICMP_ECHOREPLY:
-		print_reply(recv_packet, ping_time);
+		if (ping->opt.flood)
+			write(1, "\b\0", 2);
+		else
+			print_reply(recv_packet, ping_time);
 		break;
 	case ICMP_TIME_EXCEEDED:
 		print_ttl(recv_packet);

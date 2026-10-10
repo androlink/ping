@@ -18,6 +18,7 @@
 #include <stdatomic.h>
 #include <stdio.h>
 #include <sys/select.h>
+#include <unistd.h>
 
 static ssize_t ping_send(t_ping *ping);
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf);
@@ -57,12 +58,12 @@ int ft_ping_select(t_ping *ping)
 	if (ping_send(ping) == -1)
 		goto error;
 	gettimeofday(&start, NULL);
+	select_timeout = tv_from_double(ping->opt.interval);
 	while (!stop) {
 		FD_ZERO(&rfd);
 		FD_SET(ping->sckt_fd_4, &rfd);
 
-		select_timeout = tv_from_double(ping->opt.timeout);
-		tv_print(&select_timeout);
+		// tv_print(&select_timeout);
 		ret = select(ping->sckt_fd_4 + 1, &rfd, 0, 0, &select_timeout);
 
 		if (ret == -1) {
@@ -71,22 +72,25 @@ int ft_ping_select(t_ping *ping)
 			perror("ping: select");
 			goto error;
 		}
-		else if (ret > 0) {
+
+		else if (ret == 0) {
+			// timeout
+			// dprintf(2, "timeout\n");
+			if (ping_send(ping) == -1)
+				goto error;
+			gettimeofday(&start, NULL);
+			select_timeout = tv_from_double(ping->opt.timeout);
+			continue;
+		}
+		else {
 			int ret = 0;
 			ret = ping_recv(ping, &recv_packet);
 			if (ret == -1)
 				goto error;
 			else if (ret != 0) {
 				process_recv(ping, &recv_packet, &start);
+				select_timeout = tv_from_double(ping->opt.interval);
 			}
-		}
-		else {
-			// timeout
-			dprintf(2, "timeout\n");
-			if (ping_send(ping) == -1)
-				goto error;
-			gettimeofday(&start, NULL);
-			continue;
 		}
 		if (ping->stat.tx >= ping->opt.count)
 			break;
@@ -108,6 +112,8 @@ static ssize_t ping_send(t_ping *ping)
 						 0, (struct sockaddr *)&ping->opt.dest_addr, sizeof(ping->opt.dest_addr));
 	if (ret == -1)
 		perror("ping: sendto");
+	if (ping->opt.flood)
+		write(1, ".", 1);
 	ping->stat.sequence++;
 	ping->stat.tx++;
 	return (ret);

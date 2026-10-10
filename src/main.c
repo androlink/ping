@@ -50,7 +50,7 @@ int ping_addr(t_ping *ping, char *addr)
 
 	if (set_option(ping, OT_ADDR, &addr) == -1)
 		return (-1);
-	dprintf(1, "PING %s (%s): %d data bytes", addr,
+	dprintf(1, "FT_PING %s (%s): %d data bytes", addr,
 			inet_ntop(AF_INET, &ping->opt.dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
 			ping->opt.packet_size);
 	if (ping->opt.verbose)
