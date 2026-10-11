@@ -8,17 +8,17 @@
 - [x] dns resolution
 - [x] ping stats
 - [x] select
-- [x] options
+- [ ] options
 - [x] socket
 - [x] recv result
-- [x] verbose
-- [x] count
-- [ ] flood
-- [ ] interval
-- [x] size
-- [x] ttl
-- [x] tos
-- [ ] linger
-- [x] help
-- [x] preload
 - [x] checksum
+- [x] -v | verbose
+- [x] -c | count
+- [x] -f | flood
+- [x] -i | interval
+- [x] -s | size
+- [x] --ttl | ttl
+- [x] -T | tos
+- [x] -W | linger
+- [x] -h | help
+- [x] -l | preload

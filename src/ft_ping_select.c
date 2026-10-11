@@ -79,7 +79,7 @@ int ft_ping_select(t_ping *ping)
 			if (ping_send(ping) == -1)
 				goto error;
 			gettimeofday(&start, NULL);
-			select_timeout = tv_from_double(ping->opt.timeout);
+			select_timeout = tv_from_double(ping->opt.linger);
 			continue;
 		}
 		else {
@@ -114,6 +114,8 @@ static ssize_t ping_send(t_ping *ping)
 		perror("ping: sendto");
 	if (ping->opt.flood)
 		write(1, ".", 1);
+	if (ping->opt.audible)
+		write(1, "\a", 1);
 	ping->stat.sequence++;
 	ping->stat.tx++;
 	return (ret);

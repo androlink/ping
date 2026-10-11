@@ -3,6 +3,7 @@
 #include "../include/ft_ping.h"
 #include <arpa/inet.h>
 #include <getopt.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -11,17 +12,17 @@ static void print_option(void);
 static const struct option long_option[] = {
 	{"audible", no_argument, 0, 'a'},		{"count", required_argument, 0, 'c'},
 	{"flood", no_argument, 0, 'f'},			{"interval", required_argument, 0, 'i'},
-	{"size", required_argument, 0, 's'},	{"ttl", required_argument, 0, 't'},
-	{"timestamp", no_argument, 0, 'T'},		{"timeout", required_argument, 0, 'W'},
+	{"size", required_argument, 0, 's'},	{"ttl", required_argument, 0, 'L'},
+	{"tos", required_argument, 0, 'T'},		{"linger", required_argument, 0, 'W'},
 	{"verbose", no_argument, 0, 'v'},		{"help", required_argument, 0, 'h'},
 	{"preload", required_argument, 0, 'l'}, {0},
 };
 
 int init_option(int ac, char **av, t_ping *ping)
 {
-
 	int ch;
-	while ((ch = getopt_long(ac, av, "ac:fi:l:s:t:T:vW:h?", long_option, NULL)) != -1) {
+
+	while ((ch = getopt_long(ac, av, "ac:fi:l:s:L:T:vW:h?", long_option, NULL)) != -1) {
 		if (ch == '?' || ch == 'h') {
 			print_option();
 			return (-1);
@@ -40,19 +41,21 @@ int init_option(int ac, char **av, t_ping *ping)
 			double i = 0.0;
 			set_option(ping, OT_INTERVAL, &i);
 			i = 0.030;
-			set_option(ping, OT_TIMEOUT, &i);
+			set_option(ping, OT_LINGER, &i);
 		}
 		else if (ch == 'i') {
 			double i = strtod(optarg, NULL);
-			set_option(ping, OT_INTERVAL, &i);
+
+			if (i > 0.)
+				set_option(ping, OT_INTERVAL, &i);
 		}
-		else if (ch == 't') {
-			int t = strtol(optarg, NULL, 10);
+		else if (ch == 'L') {
+			uint8_t t = strtol(optarg, NULL, 10);
 			set_option(ping, OT_TTL, &t);
 		}
 		else if (ch == 'T') {
-			int t = 1;
-			set_option(ping, OT_TIMESTAMP, &t);
+			char t = 1;
+			set_option(ping, OT_TOS, &t);
 		}
 		else if (ch == 'v') {
 			int v = 1;
@@ -60,10 +63,11 @@ int init_option(int ac, char **av, t_ping *ping)
 		}
 		else if (ch == 'W') {
 			double w = strtod(optarg, NULL);
-			set_option(ping, OT_TIMEOUT, &w);
+			if (w > 0.)
+				set_option(ping, OT_LINGER, &w);
 		}
 		else if (ch == 's') {
-			int s = strtol(optarg, NULL, 10);
+			unsigned short s = strtol(optarg, NULL, 10);
 			set_option(ping, OT_SIZE, &s);
 		}
 		else if (ch == 'l') {

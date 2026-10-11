@@ -15,6 +15,8 @@ static void print_ttl(const struct s_ip_icmp *recv_packet);
 static void print_verbose(const struct s_ip_icmp *recv_packet);
 static void print_echo();
 
+static void dump_packet(const struct s_ip_icmp *packet);
+
 void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double ping_time)
 {
 	const struct icmphdr *icmp_hdr = &recv_packet->icmp.hdr;
@@ -31,8 +33,11 @@ void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double pin
 	case ICMP_TIME_EXCEEDED:
 		print_ttl(recv_packet);
 		break;
+	case ICMP_DEST_UNREACH:
+		break;
 	default:
 		printf("unkown\n");
+		dump_packet(recv_packet);
 	}
 	if (!(icmp_hdr->type == ICMP_ECHO || icmp_hdr->type == ICMP_ECHOREPLY) && ping->opt.verbose)
 		print_verbose(recv_packet);
@@ -53,7 +58,7 @@ static void print_reply(const struct s_ip_icmp *recv_packet, double ping_time)
 
 static void print_echo()
 {
-	dprintf(2, "echo\n");
+	// dprintf(2, "echo\n");
 }
 
 static void print_ttl(const struct s_ip_icmp *recv_packet)
@@ -75,8 +80,6 @@ static void print_ttl(const struct s_ip_icmp *recv_packet)
 		dprintf(1, "%d bytes from %s: Time to live exceeded\n", len,
 				inet_ntop(AF_INET, &ip_hdr->saddr, ntop_buffer, sizeof(ntop_buffer)));
 }
-
-static void dump_packet(const struct s_ip_icmp *packet);
 
 static void print_verbose(const struct s_ip_icmp *recv_packet)
 {

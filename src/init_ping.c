@@ -39,12 +39,11 @@ int init_ping(t_ping *ping)
 							 },
 						 .flood = 0,
 						 .interval = 1.0,
-						 .timeout = 1.0,
+						 .linger = 1.0,
 						 .ttl = 0,
 						 .tos = 0,
 						 .count = MAX_COUNT,
 						 .audible = 0,
-						 .timestamp = 0,
 						 .packet_size = 56,
 						 .verbose = 0,
 					 }};
@@ -75,10 +74,10 @@ int set_option(t_ping *ping, enum e_option_type type, void *param)
 		OPT_CASE(OT_FLOOD, ping->opt.flood);
 		OPT_CASE(OT_COUNT, ping->opt.count);
 		OPT_CASE(OT_INTERVAL, ping->opt.interval);
-		OPT_CASE(OT_TIMEOUT, ping->opt.timeout);
+		OPT_CASE(OT_LINGER, ping->opt.linger);
+		OPT_CASE(OT_TOS, ping->opt.tos);
 		OPT_CASE(OT_TTL, ping->opt.ttl);
 		OPT_CASE(OT_AUDIBLE, ping->opt.audible);
-		OPT_CASE(OT_TIMESTAMP, ping->opt.timestamp);
 		OPT_CASE(OT_VERBOSE, ping->opt.verbose);
 		OPT_CASE(OT_SEQUENCE, ping->stat.sequence);
 		OPT_CASE(OT_SIZE, ping->opt.packet_size);

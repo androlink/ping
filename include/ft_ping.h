@@ -43,18 +43,18 @@ enum e_option_type
 	// param type double
 	OT_INTERVAL,
 	// param type double
-	OT_TIMEOUT,
+	OT_LINGER,
 	// param type int
+	OT_TOS,
+	// param type short
 	OT_TTL,
 	// param type char*
 	OT_ADDR,
 	// param type int
-	OT_TIMESTAMP,
-	// param type int
 	OT_VERBOSE,
 	// param type short
 	OT_SEQUENCE,
-	// param type int
+	// param type short
 	OT_SIZE,
 	// param type int
 	OT_PRELOAD,
@@ -83,25 +83,16 @@ struct	s_ping
 
 	struct {
 		struct sockaddr_in	dest_addr;
-		// print a '\a' when send
 		int					audible;
-		// print a '.' when send
 		int					flood;
 		int					verbose;
-		int					timestamp;
-		// packet time to live in second
-		int					ttl;
-		// type of service
-		int					tos;
-		// packet timeout in second
-		double				timeout;
-		// send interval in second
-		double				interval;
+		uint8_t				ttl;
+		uint8_t				tos;
+		unsigned short		packet_size;
 		long				count;
-
-		int					packet_size;
-
 		int					preload;
+		double				interval;
+		double				linger;
 	}	opt;
 };
 
