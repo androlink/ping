@@ -26,7 +26,7 @@ void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double pin
 		break;
 	case ICMP_ECHOREPLY:
 		if (ping->opt.flood)
-			write(1, "\b\0", 2);
+			write(1, "\b \b", 3);
 		else
 			print_reply(recv_packet, ping_time);
 		break;
@@ -34,6 +34,7 @@ void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double pin
 		print_ttl(recv_packet);
 		break;
 	case ICMP_DEST_UNREACH:
+		dprintf(2, "ICMP_DEST_UNREACH\n");
 		break;
 	default:
 		printf("unkown\n");

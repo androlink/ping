@@ -69,7 +69,7 @@ struct s_stddev
 struct	s_ping
 {
 	int					sckt_fd_4;
-	int					id;
+	uint16_t			id;
 
 	struct {
 		int					tx;
@@ -78,7 +78,7 @@ struct	s_ping
 		double				max;
 		double				avg;
 		struct s_stddev		stddev;
-		short				sequence;
+		uint16_t			sequence;
 	}	stat;
 
 	struct {
@@ -88,7 +88,7 @@ struct	s_ping
 		int					verbose;
 		uint8_t				ttl;
 		uint8_t				tos;
-		unsigned short		packet_size;
+		uint16_t    		packet_size;
 		long				count;
 		int					preload;
 		double				interval;

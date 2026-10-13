@@ -38,9 +38,9 @@ int init_option(int ac, char **av, t_ping *ping)
 		else if (ch == 'f') {
 			int f = 1;
 			set_option(ping, OT_FLOOD, &f);
-			double i = 0.0;
+			double i = 0.001;
 			set_option(ping, OT_INTERVAL, &i);
-			i = 0.030;
+			i = 0.30;
 			set_option(ping, OT_LINGER, &i);
 		}
 		else if (ch == 'i') {

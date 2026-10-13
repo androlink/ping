@@ -1,4 +1,5 @@
 #include "../include/ft_ping.h"
+#include <netinet/in.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -21,7 +22,7 @@ struct s_icmp_packet init_icmp_packet(int seq, int size)
 
 int is_icmp(struct s_ip_icmp *recv_packet)
 {
-	return (recv_packet->ip.protocol == 0x01);
+	return (recv_packet->ip.protocol == IPPROTO_ICMP);
 }
 
 int check_icmp_checksum(struct s_icmp_packet *pckt, int size)

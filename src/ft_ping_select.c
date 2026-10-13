@@ -13,16 +13,20 @@
 #include "../include/ft_ping.h"
 #include <arpa/inet.h>
 #include <errno.h>
+#include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <signal.h>
 #include <stdatomic.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/select.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 static ssize_t ping_send(t_ping *ping);
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf);
-static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, struct timeval *start);
+static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, double start);
 
 volatile int stop = 0;
 
@@ -34,10 +38,12 @@ void sighandler(int _)
 
 int ft_ping_select(t_ping *ping)
 {
-	int ret;
+	int select_ret;
 	fd_set rfd;
-	struct s_ip_icmp recv_packet;
-	struct timeval select_timeout, start;
+	uint8_t recv_buffer[0xFFFF];
+	// struct s_ip_icmp recv_packet;
+	struct timeval select_timeout;
+	double last_send = 0.;
 	// struct timeval interval;
 
 	signal(SIGINT, sighandler);
@@ -57,39 +63,43 @@ int ft_ping_select(t_ping *ping)
 
 	if (ping_send(ping) == -1)
 		goto error;
-	gettimeofday(&start, NULL);
-	select_timeout = tv_from_double(ping->opt.interval);
+
+	last_send = getftime();
+	select_timeout = tv_from_double(ping->opt.linger);
 	while (!stop) {
 		FD_ZERO(&rfd);
 		FD_SET(ping->sckt_fd_4, &rfd);
 
 		// tv_print(&select_timeout);
-		ret = select(ping->sckt_fd_4 + 1, &rfd, 0, 0, &select_timeout);
+		select_ret = select(ping->sckt_fd_4 + 1, &rfd, 0, 0, &select_timeout);
 
-		if (ret == -1) {
+		if (select_ret == -1) {
 			if (errno == EINTR) // is signal
 				continue;
 			perror("ping: select");
 			goto error;
 		}
-
-		else if (ret == 0) {
+		else if (select_ret == 0) {
 			// timeout
 			// dprintf(2, "timeout\n");
 			if (ping_send(ping) == -1)
 				goto error;
-			gettimeofday(&start, NULL);
+			last_send = getftime();
 			select_timeout = tv_from_double(ping->opt.linger);
 			continue;
 		}
 		else {
-			int ret = 0;
-			ret = ping_recv(ping, &recv_packet);
-			if (ret == -1)
+			int recv_ret = 0;
+			recv_ret = ping_recv(ping, (void *)recv_buffer);
+			if (recv_ret == -1)
 				goto error;
-			else if (ret != 0) {
-				process_recv(ping, &recv_packet, &start);
-				select_timeout = tv_from_double(ping->opt.interval);
+			else if (recv_ret != 0) {
+				process_recv(ping, (void *)recv_buffer, last_send);
+				double spend_time = getftime() - last_send;
+				double rest = ping->opt.interval - spend_time;
+				if (rest < 0)
+					rest = 0;
+				select_timeout = tv_from_double(rest);
 			}
 		}
 		if (ping->stat.tx >= ping->opt.count)
@@ -121,6 +131,31 @@ static ssize_t ping_send(t_ping *ping)
 	return (ret);
 }
 
+int check_seq_id(struct icmphdr *icmp, t_ping *ping)
+{
+
+	const uint16_t id = icmp->un.echo.id;
+	const uint16_t seq = ntohs(icmp->un.echo.sequence);
+
+	switch (icmp->type) {
+	case ICMP_ECHO:
+	case ICMP_ECHOREPLY:
+		if (id != ping->id) {
+			dprintf(2, "bad id %x\b", id);
+			return 0;
+		}
+		if (seq + 1 != ping->stat.sequence) {
+			dprintf(2, "bad seq\b");
+			return 0;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return 1;
+}
+
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf)
 {
 
@@ -130,22 +165,28 @@ static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf)
 		perror("ping: recvfrom");
 		return -1;
 	}
-	if ((size_t)ret < sizeof(struct iphdr))
+	if ((size_t)ret < sizeof(struct iphdr)) {
 		return 0;
-	if (!is_icmp(recv_buf))
+	}
+	if (!is_icmp(recv_buf)) {
 		return 0;
-	if (!check_icmp_checksum(&recv_buf->icmp, ret))
-		return (0);
+	}
+	if (!check_icmp_checksum(&recv_buf->icmp, ret)) {
+		return 0;
+	}
+	if (!check_seq_id(&recv_buf->icmp.hdr, ping)) {
+		return 0;
+	}
 	return (ret);
 }
 
 #include <math.h>
 
-static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, struct timeval *start)
+static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, double start)
 {
 	const struct icmphdr *icmp_hdr = &recv_packet->icmp.hdr;
 
-	double ping_time = (getftime() - tv_to_double(start)) * 1000.;
+	double ping_time = (getftime() - start) * 1000.;
 	if (icmp_hdr->type == ICMP_ECHOREPLY) {
 		ping->stat.avg = avg_append(ping->stat.avg, ping->stat.rx, ping_time);
 		ping->stat.min = ping->stat.min == 0. ? ping_time : fmin(ping->stat.min, ping_time);
