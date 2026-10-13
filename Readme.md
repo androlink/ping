@@ -21,4 +21,4 @@
 - [x] -T | tos
 - [x] -W | linger
 - [x] -h | help
-- [x] -l | preload
+- [ ] -l | preload

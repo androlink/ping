@@ -72,7 +72,8 @@ int init_option(int ac, char **av, t_ping *ping)
 		}
 		else if (ch == 'l') {
 			int s = strtol(optarg, NULL, 10);
-			set_option(ping, OT_PRELOAD, &s);
+			if (s > 0)
+				set_option(ping, OT_PRELOAD, &s);
 		}
 	}
 	return optind;

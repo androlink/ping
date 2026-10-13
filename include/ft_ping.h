@@ -18,6 +18,8 @@
 #include <sys/time.h>
 #include <errno.h>
 
+#define DEBUG 0
+
 typedef struct s_ping	t_ping;
 typedef struct s_option	t_option;
 
@@ -53,8 +55,6 @@ enum e_option_type
 	// param type int
 	OT_VERBOSE,
 	// param type short
-	OT_SEQUENCE,
-	// param type short
 	OT_SIZE,
 	// param type int
 	OT_PRELOAD,
@@ -70,6 +70,7 @@ struct	s_ping
 {
 	int					sckt_fd_4;
 	uint16_t			id;
+	uint16_t			sequence;
 
 	struct {
 		int					tx;
@@ -78,7 +79,6 @@ struct	s_ping
 		double				max;
 		double				avg;
 		struct s_stddev		stddev;
-		uint16_t			sequence;
 	}	stat;
 
 	struct {

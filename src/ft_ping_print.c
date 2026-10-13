@@ -34,7 +34,10 @@ void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double pin
 		print_ttl(recv_packet);
 		break;
 	case ICMP_DEST_UNREACH:
+
+#if DEBUG
 		dprintf(2, "ICMP_DEST_UNREACH\n");
+#endif
 		break;
 	default:
 		printf("unkown\n");
@@ -59,7 +62,10 @@ static void print_reply(const struct s_ip_icmp *recv_packet, double ping_time)
 
 static void print_echo()
 {
-	// dprintf(2, "echo\n");
+
+#if DEBUG
+	dprintf(2, "echo\n");
+#endif
 }
 
 static void print_ttl(const struct s_ip_icmp *recv_packet)

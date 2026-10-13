@@ -117,7 +117,7 @@ static ssize_t ping_send(t_ping *ping)
 {
 	struct s_icmp_packet icmp_req;
 
-	icmp_req = init_icmp_packet(ping->stat.sequence, ping->opt.packet_size);
+	icmp_req = init_icmp_packet(ping->sequence, ping->opt.packet_size);
 	ssize_t ret = sendto(ping->sckt_fd_4, &icmp_req, sizeof(struct icmphdr) + ping->opt.packet_size,
 						 0, (struct sockaddr *)&ping->opt.dest_addr, sizeof(ping->opt.dest_addr));
 	if (ret == -1)
@@ -126,7 +126,7 @@ static ssize_t ping_send(t_ping *ping)
 		write(1, ".", 1);
 	if (ping->opt.audible)
 		write(1, "\a", 1);
-	ping->stat.sequence++;
+	ping->sequence++;
 	ping->stat.tx++;
 	return (ret);
 }
@@ -141,11 +141,15 @@ int check_seq_id(struct icmphdr *icmp, t_ping *ping)
 	case ICMP_ECHO:
 	case ICMP_ECHOREPLY:
 		if (id != ping->id) {
+#if DEBUG
 			dprintf(2, "bad id %x\b", id);
+#endif
 			return 0;
 		}
-		if (seq + 1 != ping->stat.sequence) {
+		if (seq + 1 != ping->sequence) {
+#if DEBUG
 			dprintf(2, "bad seq\b");
+#endif
 			return 0;
 		}
 		break;

@@ -79,7 +79,6 @@ int set_option(t_ping *ping, enum e_option_type type, void *param)
 		OPT_CASE(OT_TTL, ping->opt.ttl);
 		OPT_CASE(OT_AUDIBLE, ping->opt.audible);
 		OPT_CASE(OT_VERBOSE, ping->opt.verbose);
-		OPT_CASE(OT_SEQUENCE, ping->stat.sequence);
 		OPT_CASE(OT_SIZE, ping->opt.packet_size);
 		OPT_CASE(OT_PRELOAD, ping->opt.preload);
 	case OT_ADDR: {
@@ -118,7 +117,10 @@ int address_resolution(t_ping *ping, char *addr)
 		int resa = getnameinfo(ai->ai_addr, ai->ai_addrlen, hostname, sizeof(hostname), NULL, 0, 0);
 		if (resa != 0 || resn != 0)
 			continue;
+
+#if DEBUG
 		dprintf(2, "Hostname for %s: %s\n", hostaddr, hostname);
+#endif
 		if (inet_pton(AF_INET, hostaddr, &ping->opt.dest_addr.sin_addr) != 1) {
 			dprintf(2, "Failed to resolve address '%s'\n", hostaddr);
 			goto on_error;
