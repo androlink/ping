@@ -163,8 +163,11 @@ int check_seq_id(struct icmphdr *icmp, t_ping *ping)
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf)
 {
 
+	char ntop_buffer[50];
+
 	ssize_t ret =
 		recvfrom(ping->sckt_fd_4, recv_buf, sizeof(*recv_buf), 0, (struct sockaddr *)NULL, NULL);
+
 	if (ret == -1) {
 		perror("ping: recvfrom");
 		return -1;
@@ -176,6 +179,8 @@ static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf)
 		return 0;
 	}
 	if (!check_icmp_checksum(&recv_buf->icmp, ret)) {
+		inet_ntop(AF_INET, &recv_buf->ip.saddr, ntop_buffer, sizeof(ntop_buffer));
+		dprintf(1, "checksum mismatch from %s\n", ntop_buffer);
 		return 0;
 	}
 	if (!check_seq_id(&recv_buf->icmp.hdr, ping)) {
