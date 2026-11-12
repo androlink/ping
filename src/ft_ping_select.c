@@ -24,9 +24,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static ssize_t ping_send(t_ping *ping);
+static ssize_t ping_send(t_ping *ping, struct sockaddr_in *addr, t_ping_opt *opt);
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf);
-static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, double start);
+static void update_stats(t_ping_stat *stats, struct s_ip_icmp *recv_packet, double start);
 
 volatile int stop = 0;
 
@@ -36,7 +36,7 @@ void sighandler(int _)
 	stop = 1;
 }
 
-int ft_ping_select(t_ping *ping)
+int ft_ping_select(t_ping *ping, struct sockaddr_in *target, t_ping_opt *opt, t_ping_stat *stats)
 {
 	int select_ret;
 	fd_set rfd;
@@ -47,25 +47,25 @@ int ft_ping_select(t_ping *ping)
 	// struct timeval interval;
 
 	signal(SIGINT, sighandler);
-	if (ping->opt.ttl != 0)
-		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TTL, &ping->opt.ttl, sizeof(ping->opt.ttl));
-	if (ping->opt.tos != 0)
-		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TOS, &ping->opt.tos, sizeof(ping->opt.tos));
-	if (ping->opt.flood)
-		ping->opt.interval = 0.01;
+	if (opt->ttl != 0)
+		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TTL, &opt->ttl, sizeof(opt->ttl));
+	if (opt->tos != 0)
+		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TOS, &opt->tos, sizeof(opt->tos));
+	if (opt->flood)
+		opt->interval = 0.01;
 
-	// interval = tv_from_double(ping->opt.interval);
+	// interval = tv_from_double(opt->interval);
 
-	for (long preload_count = 0; preload_count < ping->opt.preload; preload_count++) {
+	for (long preload_count = 0; preload_count < opt->preload; preload_count++) {
 		// if (ping_send(ping) == -1) goto error;
-		ping_send(ping);
+		ping_send(ping, target, opt);
 	}
 
-	if (ping_send(ping) == -1)
+	if (ping_send(ping, target, opt) == -1)
 		goto error;
 
 	last_send = getftime();
-	select_timeout = tv_from_double(ping->opt.linger);
+	select_timeout = tv_from_double(opt->linger);
 	while (!stop) {
 		FD_ZERO(&rfd);
 		FD_SET(ping->sckt_fd_4, &rfd);
@@ -82,10 +82,11 @@ int ft_ping_select(t_ping *ping)
 		else if (select_ret == 0) {
 			// timeout
 			// dprintf(2, "timeout\n");
-			if (ping_send(ping) == -1)
+			if (ping_send(ping, target, opt) == -1)
 				goto error;
+			stats->tx++;
 			last_send = getftime();
-			select_timeout = tv_from_double(ping->opt.linger);
+			select_timeout = tv_from_double(opt->linger);
 			continue;
 		}
 		else {
@@ -94,15 +95,17 @@ int ft_ping_select(t_ping *ping)
 			if (recv_ret == -1)
 				goto error;
 			else if (recv_ret != 0) {
-				process_recv(ping, (void *)recv_buffer, last_send);
+				double ping_time = (getftime() - last_send) * 1000.;
+				update_stats(stats, (void *)recv_buffer, last_send);
+				ft_ping_print(opt, (void *)recv_buffer, ping_time);
 				double spend_time = getftime() - last_send;
-				double rest = ping->opt.interval - spend_time;
+				double rest = opt->interval - spend_time;
 				if (rest < 0)
 					rest = 0;
 				select_timeout = tv_from_double(rest);
 			}
 		}
-		if (ping->stat.tx >= ping->opt.count)
+		if (stats->tx >= opt->count)
 			break;
 	}
 
@@ -113,21 +116,20 @@ error:
 	return (-1);
 }
 
-static ssize_t ping_send(t_ping *ping)
+static ssize_t ping_send(t_ping *ping, struct sockaddr_in *addr, t_ping_opt *opt)
 {
 	struct s_icmp_packet icmp_req;
 
-	icmp_req = init_icmp_packet(ping->sequence, ping->opt.packet_size);
-	ssize_t ret = sendto(ping->sckt_fd_4, &icmp_req, sizeof(struct icmphdr) + ping->opt.packet_size,
-						 0, (struct sockaddr *)&ping->opt.dest_addr, sizeof(ping->opt.dest_addr));
+	icmp_req = init_icmp_packet(ping->sequence, opt->packet_size);
+	ssize_t ret = sendto(ping->sckt_fd_4, &icmp_req, sizeof(struct icmphdr) + opt->packet_size, 0,
+						 (struct sockaddr *)addr, sizeof(*addr));
 	if (ret == -1)
 		perror("ping: sendto");
-	if (ping->opt.flood)
+	if (opt->flood)
 		write(1, ".", 1);
-	if (ping->opt.audible)
+	if (opt->audible)
 		write(1, "\a", 1);
 	ping->sequence++;
-	ping->stat.tx++;
 	return (ret);
 }
 
@@ -191,20 +193,15 @@ static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf)
 
 #include <math.h>
 
-static int process_recv(t_ping *ping, struct s_ip_icmp *recv_packet, double start)
+static void update_stats(t_ping_stat *stats, struct s_ip_icmp *recv_packet, double ping_time)
 {
 	const struct icmphdr *icmp_hdr = &recv_packet->icmp.hdr;
 
-	double ping_time = (getftime() - start) * 1000.;
 	if (icmp_hdr->type == ICMP_ECHOREPLY) {
-		ping->stat.avg = avg_append(ping->stat.avg, ping->stat.rx, ping_time);
-		ping->stat.min = ping->stat.min == 0. ? ping_time : fmin(ping->stat.min, ping_time);
-		ping->stat.max = ping->stat.max == 0. ? ping_time : fmax(ping->stat.max, ping_time);
-		ping->stat.stddev = stddef_append(ping->stat.stddev, ping_time);
-		ping->stat.rx++;
+		stats->avg = avg_append(stats->avg, stats->rx, ping_time);
+		stats->min = stats->min == 0. ? ping_time : fmin(stats->min, ping_time);
+		stats->max = stats->max == 0. ? ping_time : fmax(stats->max, ping_time);
+		stats->stddev = stddef_append(stats->stddev, ping_time);
+		stats->rx++;
 	}
-
-	ft_ping_print(ping, recv_packet, ping_time);
-
-	return (1);
 }

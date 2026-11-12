@@ -1,34 +1,33 @@
 
 
 #include "../include/ft_ping.h"
+#include <netinet/in.h>
 #include <stdio.h>
 
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 
 // slow ping 5.149.253.24
 
-int ping_addr(t_ping *ping, char *addr);
-void print_stat(t_ping *ping, char *addr);
+static int ping_addr(t_ping *ping, char *target, t_ping_opt *opt);
 
 void close(int);
 
 int main(int ac, char **av)
 {
-	(void)ac;
-	(void)av;
-	t_ping ping;
+	t_ping ping = {0};
+	t_ping_opt option = {0};
 	int opt_addr = 0;
 	long ret;
 
 	if (init_ping(&ping) == -1)
 		goto on_error;
-	if ((opt_addr = init_option(ac, av, &ping)) == -1)
+	if ((opt_addr = init_option(ac, av, &option)) == -1)
 		goto on_error;
 
 	for (int i = opt_addr; i < ac; i++) {
-		reset_stats(&ping);
-		ret = ping_addr(&ping, av[i]);
+		ret = ping_addr(&ping, av[i], &option);
 		if (ret == -1)
 			goto on_error;
 	}
@@ -42,42 +41,24 @@ on_error: {
 	return (-1);
 }
 
-typeof(ft_ping) *ft_ping_ptr = ft_ping_select;
-
-int ping_addr(t_ping *ping, char *addr)
+static int ping_addr(t_ping *ping, char *target, t_ping_opt *opt)
 {
 	char dest_ip[50];
+	struct sockaddr_in dest_addr = {.sin_family = AF_INET};
+	t_ping_stat stats = {0};
 
-	if (set_option(ping, OT_ADDR, &addr) == -1)
-		return (-1);
-	dprintf(1, "FT_PING %s (%s): %d data bytes", addr,
-			inet_ntop(AF_INET, &ping->opt.dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
-			ping->opt.packet_size);
-	if (ping->opt.verbose)
+	if (address_resolution(target, &dest_addr) == -1)
+
+		dprintf(1, "FT_PING %s (%s): %d data bytes", target,
+				inet_ntop(AF_INET, &dest_addr.sin_addr, dest_ip, sizeof(dest_ip)),
+				opt->packet_size);
+	if (opt->verbose)
 		dprintf(1, ", id 0x%x = %d", ping->id, ping->id);
 	dprintf(1, "\n");
-	int ret = ft_ping_ptr(ping);
+	int ret = ft_ping_select(ping, &dest_addr, opt, &stats);
 	if (ret == -1)
 		return -1;
-	print_stat(ping, addr);
+	print_stat(stats, target);
 
 	return 1;
-}
-
-#include <math.h>
-
-void print_stat(t_ping *ping, char *addr)
-{
-
-	double stddev = ping->stat.stddev.agregator_sq -
-					2. * ping->stat.avg * ping->stat.stddev.agregator_si +
-					ping->stat.avg * ping->stat.avg * (double)ping->stat.rx;
-
-	stddev = sqrt(stddev / (double)ping->stat.rx);
-	dprintf(1, "--- %s ping statistics ---\n", addr);
-	dprintf(1, "%d packets transmitted, %d packet received, %3.2f%% packet loss\n", ping->stat.tx,
-			ping->stat.rx, (1. - (ping->stat.rx / (double)ping->stat.tx)) * 100);
-	if (ping->stat.rx != 0)
-		dprintf(1, "round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n", ping->stat.min,
-				ping->stat.avg, ping->stat.max, stddev);
 }

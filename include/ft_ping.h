@@ -20,8 +20,9 @@
 
 #define DEBUG 0
 
-typedef struct s_ping	t_ping;
-typedef struct s_option	t_option;
+typedef struct s_ping   	t_ping;
+typedef struct s_ping_opt	t_ping_opt;
+typedef struct s_ping_stats	t_ping_stat;
 
 typedef int				t_socket;
 
@@ -50,8 +51,6 @@ enum e_option_type
 	OT_TOS,
 	// param type short
 	OT_TTL,
-	// param type char*
-	OT_ADDR,
 	// param type int
 	OT_VERBOSE,
 	// param type short
@@ -66,35 +65,36 @@ struct s_stddev
 	double agregator_sq;
 };
 
+struct s_ping_stats{
+	int					tx;
+	int					rx;
+	double				min;
+	double				max;
+	double				avg;
+	struct s_stddev		stddev;
+};
+
+struct s_ping_opt{
+	int					audible;
+	int					flood;
+	int					verbose;
+	uint8_t				ttl;
+	uint8_t				tos;
+	uint16_t    		packet_size;
+	long				count;
+	int					preload;
+	double				interval;
+	double				linger;
+};
+
 struct	s_ping
 {
 	int					sckt_fd_4;
 	uint16_t			id;
 	uint16_t			sequence;
-
-	struct {
-		int					tx;
-		int					rx;
-		double				min;
-		double				max;
-		double				avg;
-		struct s_stddev		stddev;
-	}	stat;
-
-	struct {
-		struct sockaddr_in	dest_addr;
-		int					audible;
-		int					flood;
-		int					verbose;
-		uint8_t				ttl;
-		uint8_t				tos;
-		uint16_t    		packet_size;
-		long				count;
-		int					preload;
-		double				interval;
-		double				linger;
-	}	opt;
 };
+
+
 
 struct s_icmp_packet
 {
@@ -123,10 +123,12 @@ double			getftime();
 
 struct s_stddev	stddef_append(struct s_stddev aggregator, double time);
 double			avg_append(double avg_agregator, int count, double num);
+void            print_stat(t_ping_stat stat, char *addr);
 
+int address_resolution(char *target, struct sockaddr_in *dest_addr);
 
-int	init_option(int ac, char **av, t_ping *ping);
-int	set_option(t_ping *ping, enum e_option_type type, void *param);
+int	init_option(int ac, char **av, t_ping_opt *opt);
+int set_option(t_ping_opt *opt, enum e_option_type type, void *param);
 
 enum e_ierror_code
 {
@@ -142,16 +144,14 @@ const char	*str_ierror(int code);
 int			need_errno(int code);
 void		print_error(int code);
 
-double getftime();
+double      getftime();
 
+t_ping_opt  default_opt();
 int			init_ping(t_ping *ping);
 void		free_ping(t_ping *ping);
-int			reset_stats(t_ping *ping);
 
-int			ft_ping(t_ping *ping);
-int			ft_ping_poll(t_ping *ping);
-int			ft_ping_select(t_ping *ping);
-void        ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double ping_time);
+int         ft_ping_select(t_ping *ping, struct sockaddr_in *target, t_ping_opt *opt, t_ping_stat *stats);
+void        ft_ping_print(t_ping_opt *opt, const struct s_ip_icmp *recv_packet, double ping_time);
 
 
 void	ft_memdump(void *p, size_t len);

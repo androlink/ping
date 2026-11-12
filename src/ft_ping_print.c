@@ -17,7 +17,7 @@ static void print_echo();
 
 static void dump_packet(const struct s_ip_icmp *packet);
 
-void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double ping_time)
+void ft_ping_print(t_ping_opt *opt, const struct s_ip_icmp *recv_packet, double ping_time)
 {
 	const struct icmphdr *icmp_hdr = &recv_packet->icmp.hdr;
 	switch (icmp_hdr->type) {
@@ -25,7 +25,7 @@ void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double pin
 		print_echo();
 		break;
 	case ICMP_ECHOREPLY:
-		if (ping->opt.flood)
+		if (opt->flood)
 			write(1, "\b \b", 3);
 		else
 			print_reply(recv_packet, ping_time);
@@ -43,7 +43,7 @@ void ft_ping_print(t_ping *ping, const struct s_ip_icmp *recv_packet, double pin
 		printf("unkown\n");
 		dump_packet(recv_packet);
 	}
-	if (!(icmp_hdr->type == ICMP_ECHO || icmp_hdr->type == ICMP_ECHOREPLY) && ping->opt.verbose)
+	if (!(icmp_hdr->type == ICMP_ECHO || icmp_hdr->type == ICMP_ECHOREPLY) && opt->verbose)
 		print_verbose(recv_packet);
 }
 

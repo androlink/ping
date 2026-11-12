@@ -9,8 +9,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int address_resolution(t_ping *ping, char *addr);
-
 int init_ping(t_ping *ping)
 {
 	int sckt = 0;
@@ -28,31 +26,31 @@ int init_ping(t_ping *ping)
 		goto on_error;
 	}
 
-	*ping = (t_ping){.sckt_fd_4 = sckt,
-					 .id = getpid(),
-					 .stat = {0},
-					 .opt = {
-						 .dest_addr =
-							 (typeof(ping->opt.dest_addr)){
-								 .sin_addr.s_addr = 0,
-								 .sin_family = AF_INET,
-							 },
-						 .flood = 0,
-						 .interval = 1.0,
-						 .linger = 1.0,
-						 .ttl = 0,
-						 .tos = 0,
-						 .count = MAX_COUNT,
-						 .audible = 0,
-						 .packet_size = 56,
-						 .verbose = 0,
-					 }};
+	*ping = (t_ping){
+		.sckt_fd_4 = sckt,
+		.id = getpid(),
+	};
 	return (1);
 on_error: {
 	if (sckt >= 0)
 		close(sckt);
 }
 	return -1;
+}
+
+t_ping_opt default_opt()
+{
+	return (t_ping_opt){
+		.flood = 0,
+		.interval = 1.0,
+		.linger = 1.0,
+		.ttl = 0,
+		.tos = 0,
+		.count = MAX_COUNT,
+		.audible = 0,
+		.packet_size = 56,
+		.verbose = 0,
+	};
 }
 
 void free_ping(t_ping *ping)
@@ -62,8 +60,7 @@ void free_ping(t_ping *ping)
 	ping->sckt_fd_4 = -1;
 }
 
-// todo dns resolution
-int set_option(t_ping *ping, enum e_option_type type, void *param)
+int set_option(t_ping_opt *opt, enum e_option_type type, void *param)
 {
 #define OPT_CASE(COND, FLD)                                                                        \
 	case COND:                                                                                     \
@@ -71,21 +68,16 @@ int set_option(t_ping *ping, enum e_option_type type, void *param)
 		break
 
 	switch (type) {
-		OPT_CASE(OT_FLOOD, ping->opt.flood);
-		OPT_CASE(OT_COUNT, ping->opt.count);
-		OPT_CASE(OT_INTERVAL, ping->opt.interval);
-		OPT_CASE(OT_LINGER, ping->opt.linger);
-		OPT_CASE(OT_TOS, ping->opt.tos);
-		OPT_CASE(OT_TTL, ping->opt.ttl);
-		OPT_CASE(OT_AUDIBLE, ping->opt.audible);
-		OPT_CASE(OT_VERBOSE, ping->opt.verbose);
-		OPT_CASE(OT_SIZE, ping->opt.packet_size);
-		OPT_CASE(OT_PRELOAD, ping->opt.preload);
-	case OT_ADDR: {
-		char *addr = *(typeof(addr) *)param;
-		return (address_resolution(ping, addr));
-		break;
-	}
+		OPT_CASE(OT_FLOOD, opt->flood);
+		OPT_CASE(OT_COUNT, opt->count);
+		OPT_CASE(OT_INTERVAL, opt->interval);
+		OPT_CASE(OT_LINGER, opt->linger);
+		OPT_CASE(OT_TOS, opt->tos);
+		OPT_CASE(OT_TTL, opt->ttl);
+		OPT_CASE(OT_AUDIBLE, opt->audible);
+		OPT_CASE(OT_VERBOSE, opt->verbose);
+		OPT_CASE(OT_SIZE, opt->packet_size);
+		OPT_CASE(OT_PRELOAD, opt->preload);
 	default:
 		break;
 	}
@@ -97,14 +89,14 @@ int set_option(t_ping *ping, enum e_option_type type, void *param)
 #endif
 #include <netdb.h>
 
-int address_resolution(t_ping *ping, char *addr)
+int address_resolution(char *target, struct sockaddr_in *dest_addr)
 {
 	struct addrinfo *result;
 
 	struct addrinfo hints = {.ai_family = AF_INET, .ai_socktype = SOCK_RAW};
 
-	if (getaddrinfo(addr, NULL, &hints, &result) != 0) {
-		dprintf(2, "Failed to resolve address '%s': %s\n", addr, "todo");
+	if (getaddrinfo(target, NULL, &hints, &result) != 0) {
+		dprintf(2, "Failed to resolve address '%s': %s\n", target, "todo");
 		return (-1);
 	}
 
@@ -121,7 +113,7 @@ int address_resolution(t_ping *ping, char *addr)
 #if DEBUG
 		dprintf(2, "Hostname for %s: %s\n", hostaddr, hostname);
 #endif
-		if (inet_pton(AF_INET, hostaddr, &ping->opt.dest_addr.sin_addr) != 1) {
+		if (inet_pton(AF_INET, hostaddr, &dest_addr->sin_addr) != 1) {
 			dprintf(2, "Failed to resolve address '%s'\n", hostaddr);
 			goto on_error;
 		}
@@ -132,10 +124,4 @@ int address_resolution(t_ping *ping, char *addr)
 on_error:
 	freeaddrinfo(result);
 	return (-1);
-}
-
-int reset_stats(t_ping *ping)
-{
-	ping->stat = (typeof(ping->stat)){0};
-	return 1;
 }
