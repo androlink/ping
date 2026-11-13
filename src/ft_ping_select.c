@@ -24,7 +24,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static ssize_t ping_send(t_ping *ping, struct sockaddr_in *addr, t_ping_opt *opt);
+static ssize_t ping_send(t_ping *ping, struct sockaddr_in *addr, t_ping_opt *opt,
+						 t_ping_stat *stats);
 static ssize_t ping_recv(t_ping *ping, struct s_ip_icmp *recv_buf);
 static void update_stats(t_ping_stat *stats, struct s_ip_icmp *recv_packet, double start);
 
@@ -51,17 +52,12 @@ int ft_ping_select(t_ping *ping, struct sockaddr_in *target, t_ping_opt *opt, t_
 		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TTL, &opt->ttl, sizeof(opt->ttl));
 	if (opt->tos != 0)
 		setsockopt(ping->sckt_fd_4, SOL_IP, IP_TOS, &opt->tos, sizeof(opt->tos));
-	if (opt->flood)
-		opt->interval = 0.01;
-
-	// interval = tv_from_double(opt->interval);
 
 	for (long preload_count = 0; preload_count < opt->preload; preload_count++) {
-		// if (ping_send(ping) == -1) goto error;
-		ping_send(ping, target, opt);
+		ping_send(ping, target, opt, stats);
 	}
 
-	if (ping_send(ping, target, opt) == -1)
+	if (ping_send(ping, target, opt, stats) == -1)
 		goto error;
 
 	last_send = getftime();
@@ -70,21 +66,17 @@ int ft_ping_select(t_ping *ping, struct sockaddr_in *target, t_ping_opt *opt, t_
 		FD_ZERO(&rfd);
 		FD_SET(ping->sckt_fd_4, &rfd);
 
-		// tv_print(&select_timeout);
 		select_ret = select(ping->sckt_fd_4 + 1, &rfd, 0, 0, &select_timeout);
 
 		if (select_ret == -1) {
-			if (errno == EINTR) // is signal
+			if (errno == EINTR)
 				continue;
 			perror("ping: select");
 			goto error;
 		}
 		else if (select_ret == 0) {
-			// timeout
-			// dprintf(2, "timeout\n");
-			if (ping_send(ping, target, opt) == -1)
+			if (ping_send(ping, target, opt, stats) == -1)
 				goto error;
-			stats->tx++;
 			last_send = getftime();
 			select_timeout = tv_from_double(opt->linger);
 			continue;
@@ -95,10 +87,9 @@ int ft_ping_select(t_ping *ping, struct sockaddr_in *target, t_ping_opt *opt, t_
 			if (recv_ret == -1)
 				goto error;
 			else if (recv_ret != 0) {
-				double ping_time = (getftime() - last_send) * 1000.;
-				update_stats(stats, (void *)recv_buffer, last_send);
-				ft_ping_print(opt, (void *)recv_buffer, ping_time);
 				double spend_time = getftime() - last_send;
+				update_stats(stats, (void *)recv_buffer, spend_time * 1000.);
+				ft_ping_print(opt, (void *)recv_buffer, spend_time * 1000.);
 				double rest = opt->interval - spend_time;
 				if (rest < 0)
 					rest = 0;
@@ -116,7 +107,8 @@ error:
 	return (-1);
 }
 
-static ssize_t ping_send(t_ping *ping, struct sockaddr_in *addr, t_ping_opt *opt)
+static ssize_t ping_send(t_ping *ping, struct sockaddr_in *addr, t_ping_opt *opt,
+						 t_ping_stat *stats)
 {
 	struct s_icmp_packet icmp_req;
 
@@ -130,6 +122,7 @@ static ssize_t ping_send(t_ping *ping, struct sockaddr_in *addr, t_ping_opt *opt
 	if (opt->audible)
 		write(1, "\a", 1);
 	ping->sequence++;
+	stats->tx++;
 	return (ret);
 }
 

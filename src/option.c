@@ -23,6 +23,7 @@ int init_option(int ac, char **av, t_ping_opt *opt)
 	_Bool flood = 0;
 	_Bool interval = 0;
 	int ch;
+	*opt = default_opt();
 
 	while ((ch = getopt_long(ac, av, "ac:fi:l:s:L:T:vW:h?", long_option, NULL)) != -1) {
 		if (ch == '?' || ch == 'h') {
