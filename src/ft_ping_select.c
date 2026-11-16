@@ -101,7 +101,7 @@ int ft_ping_select(t_ping *ping, struct sockaddr_in *target, t_ping_opt *opt, t_
 	}
 
 	signal(SIGINT, SIG_DFL);
-	return (1);
+	return (0);
 error:
 	signal(SIGINT, SIG_DFL);
 	return (-1);

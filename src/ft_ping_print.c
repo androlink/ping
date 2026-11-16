@@ -22,7 +22,8 @@ void ft_ping_print(t_ping_opt *opt, const struct s_ip_icmp *recv_packet, double 
 	const struct icmphdr *icmp_hdr = &recv_packet->icmp.hdr;
 	switch (icmp_hdr->type) {
 	case ICMP_ECHO:
-		print_echo();
+		if (!opt->quiet)
+			print_echo();
 		break;
 	case ICMP_ECHOREPLY:
 		if (opt->flood)

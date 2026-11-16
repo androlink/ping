@@ -10,12 +10,19 @@
 static void print_option(void);
 
 static const struct option long_option[] = {
-	{"audible", no_argument, 0, 'a'},		{"count", required_argument, 0, 'c'},
-	{"flood", no_argument, 0, 'f'},			{"interval", required_argument, 0, 'i'},
-	{"size", required_argument, 0, 's'},	{"ttl", required_argument, 0, 'L'},
-	{"tos", required_argument, 0, 'T'},		{"linger", required_argument, 0, 'W'},
-	{"verbose", no_argument, 0, 'v'},		{"help", required_argument, 0, 'h'},
-	{"preload", required_argument, 0, 'l'}, {0},
+	{"audible", no_argument, 0, 'a'},
+	{"count", required_argument, 0, 'c'},
+	{"flood", no_argument, 0, 'f'},
+	{"interval", required_argument, 0, 'i'},
+	{"size", required_argument, 0, 's'},
+	{"ttl", required_argument, 0, 'L'},
+	{"tos", required_argument, 0, 'T'},
+	{"linger", required_argument, 0, 'W'},
+	{"verbose", no_argument, 0, 'v'},
+	{"help", required_argument, 0, 'h'},
+	{"preload", required_argument, 0, 'l'},
+	{"quiet", no_argument, 0, 'q'},
+	{0},
 };
 
 int init_option(int ac, char **av, t_ping_opt *opt)
@@ -25,7 +32,7 @@ int init_option(int ac, char **av, t_ping_opt *opt)
 	int ch;
 	*opt = default_opt();
 
-	while ((ch = getopt_long(ac, av, "ac:fi:l:s:L:T:vW:h?", long_option, NULL)) != -1) {
+	while ((ch = getopt_long(ac, av, "ac:fi:l:s:L:qT:vW:h?", long_option, NULL)) != -1) {
 		if (ch == '?' || ch == 'h') {
 			print_option();
 			return (-1);
@@ -73,21 +80,44 @@ int init_option(int ac, char **av, t_ping_opt *opt)
 			set_option(opt, OT_SIZE, &s);
 		}
 		else if (ch == 'l') {
+
+			int q = 1;
+			set_option(opt, OT_PRELOAD, &q);
+		}
+		else if (ch == 'q') {
 			int s = strtol(optarg, NULL, 10);
 			if (s > 0)
-				set_option(opt, OT_PRELOAD, &s);
+				set_option(opt, OT_QUIET, &s);
 		}
 	}
 	if (interval == 1 && flood == 1) {
 		dprintf(2, "ft_ping: -f and -i incompatible options\n");
 		return -1;
 	}
-
+	if (optind == ac) {
+		dprintf(1, "missing host operand\n");
+		dprintf(1, "try 'ft_ping --help' or 'ft_ping --?' for more information.\n");
+		return -1;
+	}
 	return optind;
 }
 
 static void print_option(void)
 {
-	dprintf(2, "tkt y a les options d'affiché\n");
-	dprintf(2, "truc de plus de details, fait un ping -? stp\n");
+	dprintf(1, "FT_PING\n");
+	dprintf(1, "usage: ft_ping [OPTION...] HOST ...\n");
+	dprintf(1, "\n");
+	dprintf(1, "-h | ?, --help\t\tdisplay help menu\n");
+	dprintf(1, "-v, --verbose\t\tverbose output\n");
+	dprintf(1, "-i, --interval=NUMBER\t\twait NUMBER seconds between sending each packet\n");
+	dprintf(1, "-L, --ttl=N\t\tspecify N as time-to-live\n");
+	dprintf(1, "-T, --tos=N\t\tset type of service (TOS) to N\n");
+	dprintf(1, "-W, --linger=N\t\tnumber of seconds to wait for response\n");
+	dprintf(1, "-f, --flood\t\tflood ping\n");
+	dprintf(1, "-l, --preload=NUMBER\t\tsend NUMBER packet as fast as possible before falling into "
+			   "normal mode of behavior (not implemented)\n");
+	dprintf(1, "-f, --flood\t\tflood ping\n");
+	dprintf(1, "-q, --quiet\t\tflood ping\n");
+	dprintf(1, "-s, --size=NUMBER\t\tsend NUMBER data octets\n");
+	dprintf(1, "-c, --count=NUMBER\t\tstop after sending NUMBER packet\n");
 }

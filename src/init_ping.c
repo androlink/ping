@@ -78,6 +78,7 @@ int set_option(t_ping_opt *opt, enum e_option_type type, void *param)
 		OPT_CASE(OT_VERBOSE, opt->verbose);
 		OPT_CASE(OT_SIZE, opt->packet_size);
 		OPT_CASE(OT_PRELOAD, opt->preload);
+		OPT_CASE(OT_QUIET, opt->quiet);
 	default:
 		break;
 	}

@@ -57,6 +57,7 @@ enum e_option_type
 	OT_SIZE,
 	// param type int
 	OT_PRELOAD,
+	OT_QUIET,
 };
 
 struct s_stddev
@@ -83,6 +84,7 @@ struct s_ping_opt{
 	uint16_t    		packet_size;
 	long				count;
 	int					preload;
+	int                 quiet;
 	double				interval;
 	double				linger;
 };

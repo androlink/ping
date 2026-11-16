@@ -8,7 +8,7 @@
 - [x] dns resolution
 - [x] ping stats
 - [x] select
-- [ ] options
+- [x] options
 - [x] socket
 - [x] recv result
 - [x] checksum
@@ -22,3 +22,4 @@
 - [x] -W | linger
 - [x] -h | help
 - [ ] -l | preload
+- [x] -q | quiet
